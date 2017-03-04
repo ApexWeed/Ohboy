@@ -2,4 +2,4 @@
 A bunch of scripts. Eventually. Probably.
 
 ##Command reference##
-[https://helifreak.club/bot/]
+https://helifreak.club/bot/
