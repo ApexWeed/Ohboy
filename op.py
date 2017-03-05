@@ -2,7 +2,7 @@ import sopel.module
 
 @sopel.module.commands('op')
 @sopel.module.require_privmsg('This command only works as a private message.')
-@sopel.module.require_admin('This command requires admin provileges.')
+@sopel.module.require_admin('This command requires admin privileges.')
 def op(bot, trigger):
     if trigger.group(3):
         if trigger.group(4):
@@ -14,7 +14,7 @@ def op(bot, trigger):
 
 @sopel.module.commands('deop')
 @sopel.module.require_privmsg('This command only works as a private message.')
-@sopel.module.require_admin('This command requires admin provileges.')
+@sopel.module.require_admin('This command requires admin privileges.')
 def deop(bot, trigger):
     if trigger.group(3):
         if trigger.group(4):
