@@ -30,10 +30,21 @@ def setup(bot):
 
     if not bot.memory.contains('last_seen_url'):
         bot.memory['last_seen_url'] = tools.SopelMemory()
+    if not bot.memory.contains('url_callbacks'):
+        bot.memory['url_callbacks'] = tools.SopelMemory()
 
+    apl_regex = re.compile('https://apollo.rip/')
+    bot.memory['url_callbacks'][apl_regex] = apollo_title
+
+def apollo_title(bot, trigger, match):
+    return 'wow'
 
 @sopel.module.commands('title')
 def title(bot, trigger):
+    if not trigger.group(2) or trigger.group(3) == 'status':
+        status = bot.db.get_nick_value(trigger.nick, 'title')
+        bot.say('Your titles are set to %s' % status or 'off', trigger.nick)
+
     if trigger.group(3) == 'on':
         bot.db.set_nick_value(trigger.nick, 'title', 'on')
         bot.say('Titles enabled', trigger.nick)
@@ -80,9 +91,19 @@ def process_urls(bot, trigger, urls):
             url = web.iri_to_uri(url)
         except:
             pass
-        title = find_title(url, verify=bot.config.core.verify_ssl)
-        if title:
-            results.append((title, get_hostname(url)))
+
+        for regex, function in tools.iteritems(bot.memory['url_callbacks']):
+            match = regex.search(url)
+            if match is not None:
+                title = function(bot, trigger, match)
+                if title:
+                    results.append((title, get_hostname(url)))
+                    break
+
+        if not title:
+            title = find_title(url, verify=bot.config.core.verify_ssl)
+            if title:
+                results.append((title, get_hostname(url)))
     return results
 
 def find_title(url, verify=True):
