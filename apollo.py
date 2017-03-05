@@ -1,5 +1,10 @@
 import sopel.module
 
+@sopel.module.commands('apollo')
+def apollo(bot, trigger):
+    if trigger.group(3) == 'help':
+        bot.say('Feature parity with APOLLO, !slap <target> !sandwich !sudosanwich.')
+
 @sopel.module.commands('slap')
 def slap(bot, trigger):
     if trigger.group(2):

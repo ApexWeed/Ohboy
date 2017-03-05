@@ -57,6 +57,8 @@ def title(bot, trigger):
     elif trigger.group(3) == 'off':
         bot.db.set_nick_value(trigger.nick, 'title', 'off')
         bot.say('Titles disabled', trigger.nick)
+    elif trigger.group(3) == 'help':
+        bot.say('Sends link titles via privmsg/notice (!title on/off/privmsg/notice/status')
 
 @sopel.module.rule('(?u).*(https?://\S+).*')
 def title_auto(bot, trigger):
