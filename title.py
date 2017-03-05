@@ -92,6 +92,8 @@ def process_urls(bot, trigger, urls):
         except:
             pass
 
+        title = None
+
         for regex, function in tools.iteritems(bot.memory['url_callbacks']):
             match = regex.search(url)
             if match is not None:
