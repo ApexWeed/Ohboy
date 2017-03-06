@@ -38,23 +38,15 @@ def stats(bot, trigger):
     if trigger.group(2):
         wc = bot.db.get_nick_value(trigger.group(3), 'wc') or 0
         lc = bot.db.get_nick_value(trigger.group(3), 'lc') or 0
-        bot.say('Stats for ' + trigger.group(3) + ': words: ' + str(wc) + ', lines: ' + str(lc))
+        bot.say('Stats for ' + trigger.group(3) + ': words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wc / lc))
     else:
-        wc = 0
-        wcs = bot.db.execute(
-                'SELECT value FROM nick_values '
+        wc = bot.db.execute(
+                'SELECT SUM(value) FROM nick_values '
                 'WHERE key = ?',
-                ['wc']).fetchall()
-        for row in wcs:
-            #bot.say(str(row))
-            wc += row[0]
-        lc = 0
-        lcs = bot.db.execute(
-                'SELECT value FROM nick_values '
+                ['wc']).fetchone()[0]
+        lc = bot.db.execute(
+                'SELECT SUM(value) FROM nick_values '
                 'WHERE key = ?',
-                ['lc']).fetchall()
-        for row in lcs:
-            #bot.say(str(row))
-            lc += row[0]
+                ['lc']).fetchone()[0]
     
-        bot.say('Global stats: words: ' + str(wc) + ', lines: ' + str(lc))
+        bot.say('Global stats: words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wc / lc))
