@@ -17,3 +17,16 @@ def sandwich(bot, trigger):
 @sopel.module.commands('sudosandwich')
 def sudosandwich(bot, trigger):
     bot.say('Here you go, ' + trigger.nick + ' [sandwich]')
+
+@sopel.module.commands('sudoslap')
+def sudoslap(bot, trigger):
+    if not trigger.admin or not trigger.group(3) or not trigger.group(4):
+        return
+
+    try:
+        count = int(trigger.group(3))
+    except:
+        return
+
+    for i in range(0, count):
+        bot.say(trigger.nick + ' slaps ' + trigger.group(2)[len(trigger.group(3)) + 1:] + ', take ' + str(i + 1))
