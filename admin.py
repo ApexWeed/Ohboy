@@ -198,3 +198,26 @@ def save(bot, trigger):
 
     bot.config.save()
 
+@sopel.module.commands('admin')
+def admin(bot, trigger):
+    if not trigger.owner or not trigger.is_privmsg:
+        return
+
+    if trigger.group(3) == 'add':
+        if trigger.group(4):
+            alist = bot.config.core.admins
+            alist.append(trigger.group(4))
+            bot.config.core.admins = alist
+            bot.config.save()
+            bot.say('You are now a bot admin', trigger.group(4))
+            bot.reply('%s added to admins' % trigger.group(4))
+    elif trigger.group(3) == 'del':
+        if trigger.group(4):
+            alist = bot.config.core.admins
+            alist.remove(trigger.group(4))
+            bot.config.core.admins = alist
+            bot.config.save()
+            bot.say('You are no longer a bot admin', trigger.group(4))
+            bot.reply('%s removed from admins' % trigger.group(4))
+
+
