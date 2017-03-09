@@ -8,7 +8,7 @@ def setup(bot):
     bot.memory['help'] = sopel.tools.SopelMemory()
     bot.memory['help']['test'] = sopel.tools.SopelMemory()
     bot.memory['help']['test']['short'] = 'Help text for test module'
-    bot.memory['help']['test']['long'] = {helptext('all', '!test', 'Does nothing'), helptext('owner', '!wow', 'Wows')}
+    bot.memory['help']['test']['long'] = {helptext('all', '!test', 'Does nothing'), helptext('owner', '!wow', 'Wows'), helptext('user', '!indeed', 'Successful test minion')}
     bot.memory['help']['nice'] = sopel.tools.SopelMemory()
     bot.memory['help']['nice']['short'] = 'Help text for nice module'
 
@@ -25,7 +25,7 @@ def help(bot, trigger):
         if 'long' in bot.memory['help'][module]:
             count = 0
             for cmd in bot.memory['help'][module]['long']:
-                if cmd.perms == 'all' or (cmd.perms == 'admin' and trigger.admin) or (cmd.perms == 'owner' and trigger.owner):
+                if cmd.perms == 'all' or (cmd.perms == 'admin' and trigger.admin) or (cmd.perms == 'owner' and trigger.owner) or (cmd.perms == 'user' and not trigger.admin):
                     bot.say('%s: %s' % (cmd.command, cmd.line))
                     count = count + 1
             if count == 0:
