@@ -1,4 +1,7 @@
 import sopel.module
+import collections
+
+helptext = collections.namedtuple('HelpText', 'perms command line')
 
 class BadwordsSection(sopel.config.types.StaticSection):
     badwords = sopel.config.types.ListAttribute('badwords')
@@ -10,10 +13,22 @@ def configure(config):
 def setup(bot):
     bot.config.define_section('badwords', BadwordsSection)
 
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+    
+    bot.memory['help']['badwords'] = sopel.tools.SopelMemory()
+    bot.memory['help']['badwords']['short'] = 'Kicks people for saying bad words'
+    bot.memory['help']['badwords']['long'] = {
+            helptext('all', '!badwords', 'Lists bad words'),
+            helptext('all', '!badwords list', 'Lists bad words'),
+            helptext('admin', '!badwords add <word>', 'Adds a bad word to the list'),
+            helptext('admin', '!badwords del <word>', 'Removes a bad word from the list')
+            }
+
 @sopel.module.rule('(.*)')
 def badwords_trigger(bot, trigger):
     if not trigger.admin and not trigger.is_privmsg:
-        if any(word in trigger.group(1) for word in bot.config.badwords.badwords):
+        if any(word in trigger.group(1).lower() for word in bot.config.badwords.badwords):
             bot.write(('KICK', trigger.sender, trigger.nick))
 
 @sopel.module.commands('badwords')

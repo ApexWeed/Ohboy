@@ -16,6 +16,20 @@ import sopel.loader
 import sopel.module
 import subprocess
 
+helptext = collections.namedtuple('HelpText', 'perms command line')
+
+def setup(bot):
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+
+    bot.memory['help']['reload'] = sopel.tools.SopelMemory()
+    bot.memory['help']['reload']['short'] = 'Reloads modules at runtime'
+    bot.memory['help']['reload']['long'] = {
+            helptext('admin', '!reload [module]', 'Reloads either specified module or all'),
+            helptext('admin', '!reload-config', 'Reloads the whole Sopel config, and reloads modules'),
+            helptext('admin', '!load <module>', 'Loads a module')
+            }
+
 @sopel.module.commands('reload-config')
 @sopel.module.priority('low')
 @sopel.module.thread(False)
@@ -27,12 +41,12 @@ def conf_reload(bot, trigger):
     bot.reply('Configs reloaded. Probably')
     f_reload(bot, trigger)
 
-@sopel.module.nickname_commands("reload")
+@sopel.module.commands("reload")
 @sopel.module.priority("low")
 @sopel.module.thread(False)
-def f_reload(bot, trigger):
+def reload(bot, trigger):
     """Reloads a module, for use by admins only."""
-    if not trigger.admin:
+    if not trigger.admin or not trigger.is_privmsg:
         return
 
     name = trigger.group(2)
@@ -85,27 +99,12 @@ def load_module(bot, name, path, type_):
 
     bot.reply('%r (version: %s)' % (module, modified))
 
-
-@sopel.module.nickname_commands('update')
-def f_update(bot, trigger):
-    if not trigger.admin:
-        return
-
-    """Pulls the latest versions of all modules from Git"""
-    proc = subprocess.Popen('/usr/bin/git pull',
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, shell=True)
-    bot.reply(proc.communicate()[0])
-
-    f_reload(bot, trigger)
-
-
-@sopel.module.nickname_commands("load")
+@sopel.module.commands("load")
 @sopel.module.priority("low")
 @sopel.module.thread(False)
-def f_load(bot, trigger):
+def load(bot, trigger):
     """Loads a module, for use by admins only."""
-    if not trigger.admin:
+    if not trigger.admin or not trigger.is_privmsg:
         return
 
     name = trigger.group(2)
@@ -121,29 +120,3 @@ def f_load(bot, trigger):
         return bot.reply('Module %s not found' % name)
     path, type_ = mods[name]
     load_module(bot, name, path, type_)
-
-
-# Catch PM based messages
-@sopel.module.commands("reload")
-@sopel.module.priority("low")
-@sopel.module.thread(False)
-def pm_f_reload(bot, trigger):
-    """Wrapper for allowing delivery of .reload command via PM"""
-    if trigger.is_privmsg:
-        f_reload(bot, trigger)
-
-
-@sopel.module.commands('update')
-def pm_f_update(bot, trigger):
-    """Wrapper for allowing delivery of .update command via PM"""
-    if trigger.is_privmsg:
-        f_update(bot, trigger)
-
-
-@sopel.module.commands("load")
-@sopel.module.priority("low")
-@sopel.module.thread(False)
-def pm_f_load(bot, trigger):
-    """Wrapper for allowing delivery of .load command via PM"""
-    if trigger.is_privmsg:
-        f_load(bot, trigger)

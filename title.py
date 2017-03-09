@@ -2,9 +2,11 @@ from __future__ import unicode_literals, absolute_import, print_function, divisi
 
 import re
 import sopel.module
+import collections
+import requests
 from sopel import web, tools, __version__
 
-import requests
+helptext = collections.namedtuple('HelpText', 'perms command line')
 
 USER_AGENT = 'Sopel/{} (http://sopel.chat)'.format(__version__)
 default_headers = {'User-Agent': USER_AGENT}
@@ -32,6 +34,17 @@ def setup(bot):
         bot.memory['last_seen_url'] = tools.SopelMemory()
     if not bot.memory.contains('url_callbacks'):
         bot.memory['url_callbacks'] = tools.SopelMemory()
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = tools.SopelMemory()
+
+    bot.memory['help']['title'] = tools.SopelMemory()
+    bot.memory['help']['title']['short'] = 'Privmsg or notices link titles'
+    bot.memory['help']['title']['long'] = {
+            helptext('all', '!title [status]', 'Prints status of titles for you'),
+            helptext('all', '!title on|notice', 'Sets titles to notice'),
+            helptext('all', '!title privmsg', 'Sets titles to privmsg'),
+            helptext('all', '!title off', 'Turns titles off')
+            }
 
     apl_regex = re.compile('https://apollo.rip/')
     bot.memory['url_callbacks'][apl_regex] = apollo_title
@@ -57,8 +70,6 @@ def title(bot, trigger):
     elif trigger.group(3) == 'off':
         bot.db.set_nick_value(trigger.nick, 'title', 'off')
         bot.say('Titles disabled', trigger.nick)
-    elif trigger.group(3) == 'help':
-        bot.say('Sends link titles via privmsg/notice (!title on/off/privmsg/notice/status)')
 
 @sopel.module.rule('(?u).*(https?://\S+).*')
 def title_auto(bot, trigger):

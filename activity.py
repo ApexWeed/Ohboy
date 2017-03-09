@@ -1,28 +1,23 @@
 import sopel.module
 import sys
+import collections
+
+helptext = collections.namedtuple('HelpText', 'perms command line')
 
 if sys.version_info.major >= 3:
     unicode = str
     basestring = str
 
-def _deserialize(value):
-    if value is None:
-        return None
-    # sqlite likes to return ints for strings that look like ints, even though
-    # the column type is string. That's how you do dynamic typing wrong.
-    value = unicode(value)
-    # Just in case someone's mucking with the DB in a way we can't account for,
-    # ignore json parsing errors
-    try:
-        value = json.loads(value)
-    except:
-        pass
-    return value
-
-@sopel.module.commands('activity')
-def help(bot, trigger):
-    if trigger.group(3) == 'help':
-        bot.say('Logs word and line counts, !stats <nick> for per nick stats, !stats for global stats.')
+def setup(bot):
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+    
+    bot.memory['help']['activity'] = sopel.tools.SopelMemory()
+    bot.memory['help']['activity']['short'] = 'Tracks activity statistics'
+    bot.memory['help']['activity']['long'] = {
+            helptext('all', '!stats', 'Lists channel stats'),
+            helptext('all', '!stats <nick>', 'Lists stats for specified nick')
+            }
 
 @sopel.module.rule('^[^!](.*)')
 def activity(bot, trigger):
@@ -38,7 +33,11 @@ def stats(bot, trigger):
     if trigger.group(2):
         wc = bot.db.get_nick_value(trigger.group(3), 'wc') or 0
         lc = bot.db.get_nick_value(trigger.group(3), 'lc') or 0
-        bot.say('Stats for ' + trigger.group(3) + ': words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wc / lc))
+        if lc > 0:
+            wpl = wc / lc
+        else:
+            wpl = 0
+        bot.say('Stats for ' + trigger.group(3) + ': words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wpl))
     else:
         wc = bot.db.execute(
                 'SELECT SUM(value) FROM nick_values '
@@ -48,5 +47,9 @@ def stats(bot, trigger):
                 'SELECT SUM(value) FROM nick_values '
                 'WHERE key = ?',
                 ['lc']).fetchone()[0]
+        if lc > 0:
+            wpl = wc / lc
+        else:
+            wpl = 0
     
-        bot.say('Global stats: words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wc / lc))
+        bot.say('Global stats: words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wpl))

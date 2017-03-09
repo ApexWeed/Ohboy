@@ -1,8 +1,18 @@
 import sopel.module
+import collections
+
+helptext = collections.namedtuple('HelpText', 'perms command line')
+
+def setup(bot):
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+
+    bot.memory['help']['modules'] = sopel.tools.SopelMemory()
+    bot.memory['help']['modules']['short'] = 'Lists enabled modules'
+    bot.memory['help']['modules']['long'] = {
+            helptext('all', '!modules', 'Lists enabled modules')
+            }
 
 @sopel.module.commands('modules')
 def modules(bot, trigger):
-    if trigger.group(3) == 'help':
-        bot.say('find, admin and adminchannel are built in, reload, and op are admin only, all others have \'!<module> help\' available')
-    else:
-        bot.say('Modules loaded: ' + ', '.join(bot.config.core.enable))
+    bot.say('Modules loaded: ' + ', '.join(bot.config.core.enable))

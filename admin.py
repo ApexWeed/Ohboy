@@ -4,6 +4,9 @@ admin.py - Sopel admin module that actually works
 """
 
 import sopel.module
+import collections
+
+helptext = collections.namedtuple('HelpText', 'perms command line')
 
 class AdminSection(sopel.config.types.StaticSection):
     hold_ground = sopel.config.types.ValidatedAttribute('hold_ground', bool, default=False)
@@ -14,6 +17,28 @@ def configure(config):
 
 def setup(bot):
     bot.config.define_section('admin', AdminSection)
+
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+    
+    bot.memory['help']['admin'] = sopel.tools.SopelMemory()
+    bot.memory['help']['admin']['short'] = 'Admin tools'
+    bot.memory['help']['admin']['long'] = {
+            helptext('admin', '!op <channel> [nick]', 'Makes you, or nick op'),
+            helptext('admin', '!deop <channel> [nick]', 'Makes you, or nick not op'),
+            helptext('admin', '!mode <channel> <mode> [nick]', 'Sets you, or nick to the specified mode'),
+            helptext('admin', '!kick <channel> <nick>', 'Kicks a nick from the channel'),
+            helptext('admin', '!ban <channel> <banmask>', 'Bans a hostmask from the channel'),
+            helptext('admin', '!unban <channel> <banmask>', 'Unbans a hostmask from the channel'),
+            helptext('admin', '!kickban <channel> <nick> <banmask>', 'Bans a hostmask and kicks a nick from the channel'),
+            helptext('admin', '!topic <channel> <topic>', 'Sets the topic for a channel'),
+            helptext('admin', '!me <channel> <action>', 'Makes the bot perform an action in a channel'),
+            helptext('admin', '!msg <channel> <message>', 'Makes the bot say a message in a channel'),
+            helptext('admin', '!join <channel>', 'Makes the bot join a channel'),
+            helptext('admin', '!part <channel>', 'Makes the bot part a channel'),
+            helptext('owner', '!quit [reason]', 'Makes the bot shutdown'),
+            helptext('owner', '!save', 'Saves bot config')
+            }
 
 @sopel.module.event('KICK')
 @sopel.module.rule(r'.*')

@@ -1,9 +1,20 @@
 import sopel.module
+import collections
 
-@sopel.module.commands('apollo')
-def apollo(bot, trigger):
-    if trigger.group(3) == 'help':
-        bot.say('Feature parity with APOLLO, !slap <target> !sandwich !sudosanwich.')
+helptext = collections.namedtuple('HelpText', 'perms command line')
+
+def setup(bot):
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+
+    bot.memory['help']['apollo'] = sopel.tools.SopelMemory()
+    bot.memory['help']['apollo']['short'] = 'Feature parity with APOLLO'
+    bot.memory['help']['apollo']['long'] = {
+            helptext('all', '!sandwich', 'Requests a sandwich'),
+            helptext('all', '!sudosandwich', 'Requests a sandwich'),
+            helptext('all', '!slap <target>', 'Slaps somebody around'),
+            helptext('admin', '!sudoslap <count> <target>', 'Slaps somebody around. A bunch')
+            }
 
 @sopel.module.commands('slap')
 def slap(bot, trigger):
