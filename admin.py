@@ -24,6 +24,7 @@ def setup(bot):
     bot.memory['help']['admin'] = sopel.tools.SopelMemory()
     bot.memory['help']['admin']['short'] = 'Admin tools'
     bot.memory['help']['admin']['long'] = {
+            helptext('all', '!admin list', 'Lists admins'),
             helptext('admin', '!op <channel> [nick]', 'Makes you, or nick op'),
             helptext('admin', '!deop <channel> [nick]', 'Makes you, or nick not op'),
             helptext('admin', '!mode <channel> <mode> [nick]', 'Sets you, or nick to the specified mode'),
@@ -37,7 +38,9 @@ def setup(bot):
             helptext('admin', '!join <channel>', 'Makes the bot join a channel'),
             helptext('admin', '!part <channel>', 'Makes the bot part a channel'),
             helptext('owner', '!quit [reason]', 'Makes the bot shutdown'),
-            helptext('owner', '!save', 'Saves bot config')
+            helptext('owner', '!save', 'Saves bot config'),
+            helptext('owner', '!admin add <nick>', 'Adds a nick as an admin'),
+            helptext('owner', '!admin del <nick>', 'Removes a nick from admin')
             }
 
 @sopel.module.event('KICK')
@@ -225,7 +228,11 @@ def save(bot, trigger):
 
 @sopel.module.commands('admin')
 def admin(bot, trigger):
-    if not trigger.owner or not trigger.is_privmsg:
+    if trigger.group(3) == 'list':
+        bot.say('Admins: %s' % ', '.join(bot.config.core.admins))
+        return
+
+    if not trigger.is_privmsg and not trigger.admin:
         return
 
     if trigger.group(3) == 'add':
