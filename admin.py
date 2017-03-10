@@ -5,6 +5,7 @@ admin.py - Sopel admin module that actually works
 
 import sopel.module
 import collections
+import sys
 
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
@@ -40,7 +41,8 @@ def setup(bot):
             helptext('owner', '!quit [reason]', 'Makes the bot shutdown'),
             helptext('owner', '!save', 'Saves bot config'),
             helptext('owner', '!admin add <nick>', 'Adds a nick as an admin'),
-            helptext('owner', '!admin del <nick>', 'Removes a nick from admin')
+            helptext('owner', '!admin del <nick>', 'Removes a nick from admin'),
+            helptext('owner', '!pyver', 'Prints python version')
             }
 
 @sopel.module.event('KICK')
@@ -225,6 +227,13 @@ def save(bot, trigger):
         return
 
     bot.config.save()
+
+@sopel.module.commands('pyver')
+def pyver(bot, trigger):
+    if not trigger.owner or not trigger.is_privmsg:
+        return
+
+    bot.reply('Python %s' % sys.version)
 
 @sopel.module.commands('admin')
 def admin(bot, trigger):
