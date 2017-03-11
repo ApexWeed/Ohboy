@@ -10,6 +10,7 @@ https://helifreak.club/bot/
 Message the bot with !help for a command list.
 
 ##Config##
+```ini
 [apollo]
 username = username
 password = password
@@ -20,3 +21,4 @@ badwords = list,of,bad,words,or phrases
 [help]
 gen_html = true
 html_file = /path/to/index.html
+```
