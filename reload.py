@@ -45,12 +45,21 @@ def reload(bot, trigger):
     name = trigger.group(2)
 
     if not name or name == '*' or name.upper() == 'ALL THE THINGS':
+        for module in bot.config.core.enable:
+            try:
+                module = sys.modules[module]
+                if hasattr(module, 'unload'):
+                    module.unload(bot)
+            except:
+                pass
+                
         bot._callables = {
             'high': collections.defaultdict(list),
             'medium': collections.defaultdict(list),
             'low': collections.defaultdict(list)
         }
         bot._command_groups = collections.defaultdict(list)
+
         bot.setup()
         return bot.reply('done')
 
@@ -58,6 +67,8 @@ def reload(bot, trigger):
         return bot.reply('%s: not loaded, try the `load` command' % name)
 
     old_module = sys.modules[name]
+    if hasattr(old_module, 'unload'):
+        old_module.unload(bot)
 
     old_callables = {}
     for obj_name, obj in iteritems(vars(old_module)):
