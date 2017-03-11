@@ -46,12 +46,6 @@ def setup(bot):
             helptext('all', '!title off', 'Turns titles off')
             }
 
-    apl_regex = re.compile('https://apollo.rip/')
-    bot.memory['url_callbacks'][apl_regex] = apollo_title
-
-def apollo_title(bot, trigger, match):
-    return 'wow'
-
 @sopel.module.commands('title')
 def title(bot, trigger):
     if not trigger.group(2) or trigger.group(3) == 'status':
