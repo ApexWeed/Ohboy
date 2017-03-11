@@ -2,6 +2,7 @@ import sopel.module
 import collections
 import os
 import cgi
+from operator import attrgetter
 
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
@@ -42,7 +43,7 @@ def help(bot, trigger):
     module = trigger.group(3)
     if not module or module == 'all':
         bot.say('Use !help <module> for module help')
-        for key, value in bot.memory['help'].items():
+        for key, value in sorted(bot.memory['help'].items()):
             say_direct(bot, trigger.nick, '%s: %s' % (key, value['short']))
     elif module == 'genhtml':
         if not trigger.admin or not bot.config.help.gen_html or not os.path.isfile(bot.config.help.html_file):
@@ -51,11 +52,11 @@ def help(bot, trigger):
         fs = open(bot.config.help.html_file, 'w')
         fs.write('<html><head><title>{} command reference</title></head><body>'.format(bot.nick))
 
-        for module, help in bot.memory['help'].items():
+        for module, help in sorted(bot.memory['help'].items()):
             fs.write('<h2>{}</h2><p>{}</p>'.format(module, cgi.escape(help['short'])))
             if 'long' in help:
                 fs.write('<ul>')
-                for cmd in help['long']:
+                for cmd in sorted(help['long'], key=attrgetter('command')):
                     fs.write('<li class="{}"><tt>{}</tt>: {}</li>'.format(cmd.perms, cgi.escape(cmd.command), cgi.escape(cmd.line)))
                 fs.write('</ul>')
 
@@ -64,7 +65,7 @@ def help(bot, trigger):
     elif module in bot.memory['help']:
         if 'long' in bot.memory['help'][module]:
             count = 0
-            for cmd in bot.memory['help'][module]['long']:
+            for cmd in sorted(bot.memory['help'][module]['long'], key=attrgetter('command')):
                 if cmd.perms == 'all' or (cmd.perms == 'admin' and trigger.admin) or (cmd.perms == 'owner' and trigger.owner) or (cmd.perms == 'user' and not trigger.admin):
                     say_direct(bot, trigger.nick, '%s: %s' % (cmd.command, cmd.line))
                     count = count + 1
