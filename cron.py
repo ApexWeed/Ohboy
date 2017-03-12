@@ -62,18 +62,18 @@ def crontab(bot):
     if not bot.say:
         return
 
-#    try:
-    rows = bot.db.execute(
+    try:
+        rows = bot.db.execute(
                 'SELECT id, target, interval, nextrun, mode, text '
                 'FROM crontab '
-                'WHERE nextrun < DATETIME(\'now\', \'+59 seconds\')')
-    for row in rows:
-        if str2datetime(row[3]) < datetime.now():
-            runjob(bot, row[0], row[1], row[2], row[4], row[5])
-        else:
-            threading.Timer((str2datetime(row[3]) - now).total_seconds(), runjob, [bot, row[0], row[1], row[2], row[4], row[5]])
-#    except:
-#        bot.msg('helifreak', 'Failed to fetch cronjobs')
+                'WHERE nextrun < DATETIME(\'now\', \'+59 seconds\') AND enabled = 1')
+        for row in rows:
+            if str2datetime(row[3]) < datetime.now():
+                runjob(bot, row[0], row[1], row[2], row[4], row[5])
+            else:
+                threading.Timer((str2datetime(row[3]) - now).total_seconds(), runjob, [bot, row[0], row[1], row[2], row[4], row[5]])
+    except:
+        pass
 
 def runjob(bot, id, target, interval, mode, text):
     if mode == 'msg':
@@ -83,7 +83,8 @@ def runjob(bot, id, target, interval, mode, text):
     else:
         try:
             bot.db.execute(
-                    'DELETE FROM crontab '
+                    'UPDATE crontab '
+                    'SET enabled = 0 '
                     'WHERE id = ?',
                     [id])
         except:
@@ -139,7 +140,7 @@ def cronadd(bot, admin, nick, interval, mode, target, text):
         count = bot.db.execute(
                 'SELECT COUNT(*) '
                 'FROM crontab '
-                'WHERE owner = ? '
+                'WHERE owner = ? AND enabled = 1 '
                 'GROUP BY owner',
                 [nick.lower()]).fetchone()[0]
         if admin and count >= bot.config.cron.admin_max_crons:
@@ -156,6 +157,7 @@ def cronadd(bot, admin, nick, interval, mode, target, text):
         row = bot.db.execute(
                 'SELECT id, nextrun '
                 'FROM crontab '
+                'WHERE enabled = 1 '
                 'ORDER BY id DESC '
                 'LIMIT 1').fetchone()
         bot.say('Cronjob registered, ID: {}, next run: {}'.format(row[0], row[1]))
@@ -168,13 +170,14 @@ def crondel(bot, admin, nick, id):
             row = bot.db.execute(
                     'SELECT owner '
                     'FROM crontab '
-                    'WHERE id = ?',
+                    'WHERE id = ? AND enabled = 1',
                     [id]).fetchone()
             if row != nick.lower():
                 bot.say('Permission denied')
                 return
         bot.db.execute(
-                'DELETE FROM crontab '
+                'UPDATE crontab '
+                'SET enabled = 0 '
                 'WHERE id = ?',
                 [id])
         bot.say('Deleted cronjob with id {}'.format(id))
@@ -188,17 +191,18 @@ def cronlist(bot, user_nick, command_nick):
             rows = bot.db.execute(
                     'SELECT id, owner, target, interval, lastrun, nextrun, mode, text '
                     'FROM crontab '
-                    'WHERE owner = ?',
+                    'WHERE owner = ? AND enabled = 1',
                     [user_nick.lower()])
         elif command_nick == 'all':
             rows = bot.db.execute(
                     'SELECT id, owner, target, interval, lastrun, nextrun, mode, text '
-                    'FROM crontab')
+                    'FROM crontab '
+                    'WHERE enabled = 1')
         else:
             rows = bot.db.execute(
                     'SELECT id, owner, target, interval, lastrun, nextrun, mode, text '
                     'FROM crontab '
-                    'WHERE owner = ?',
+                    'WHERE owner = ? AND enabled = 1',
                     [command_nick.lower()])
     except:
         bot.say('Couldn\'t get cronjobs')
