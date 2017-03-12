@@ -21,4 +21,9 @@ badwords = list,of,bad,words,or phrases
 [help]
 gen_html = true
 html_file = /path/to/index.html
+[cron]
+user_min_interval = 900
+admin_min_minterval: 60
+user_max_crons = 1
+admin_max_crons = 3
 ```
