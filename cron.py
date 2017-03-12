@@ -142,7 +142,9 @@ def cronadd(bot, admin, nick, interval, mode, target, text):
                 'FROM crontab '
                 'WHERE owner = ? AND enabled = 1 '
                 'GROUP BY owner',
-                [nick.lower()]).fetchone()[0]
+                [nick.lower()]).fetchone() or 0
+        if count != 0:
+            count = count[0]
         if admin and count >= bot.config.cron.admin_max_crons:
             bot.say('Max cronjobs for admins is {}'.format(str(bot.config.cron.admin_max_crons)))
             return
