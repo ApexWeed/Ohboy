@@ -28,8 +28,11 @@ def setup(bot):
 @sopel.module.rule('(.*)')
 def badwords_trigger(bot, trigger):
     if not trigger.admin and not trigger.is_privmsg:
-        if any(word in trigger.group(1).lower() for word in bot.config.badwords.badwords):
-            bot.write(('KICK', trigger.sender, trigger.nick))
+        try:
+            word = next(x for x in bot.config.badwords.badwords if x in trigger.group(1).lower())
+            bot.write(('KICK', trigger.sender, trigger.nick), '{} is bampersand'.format(word))
+        except:
+            pass
 
 @sopel.module.commands('badwords')
 def badwords(bot, trigger):
