@@ -6,6 +6,7 @@ import urlparse
 import re
 import cPickle as pickle
 import os
+from subprocess import call
 
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
@@ -18,6 +19,8 @@ class ApolloSection(sopel.config.types.StaticSection):
     password = sopel.config.types.ValidatedAttribute('password')
     server = sopel.config.types.ValidatedAttribute('server')
     cookie_file = sopel.config.types.FilenameAttribute('cookie_file', relative=False)
+    simulate = sopel.config.types.ValidatedAttribute('simulate', bool, default=False)
+    apollo_config = sopel.config.types.FilenameAttribute('apollo_config', relative=True)
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -32,6 +35,8 @@ def configure(config):
     config.apollo.configure_setting('password', 'Password for Apollo integration')
     config.apollo.configure_setting('server', 'Server for Apollo integration')
     config.apollo.configure_setting('cookie_file', 'File to store Apollo session data')
+    config.apollo.configure_setting('simulate', 'Whether to allow simulation')
+    config.apollo.configure_setting('apollo_config', 'Path to config for apollo simulator')
 
 def setup(bot):
     global api
@@ -64,7 +69,8 @@ def setup(bot):
             helptext('all', '!apollo top10 torrents day|week|overall|snatched|data|seeded', 'Searches torrent top 10'),
             helptext('all', '!apollo top10 tags ut|ur|v', 'Searches tag top 10'),
             helptext('all', '!apollo top10 users ul|dl|numul|uls|dls', 'Searches user top 10'),
-            helptext('admin', '!sudoslap <count> <target>', 'Slaps somebody around. A bunch')
+            helptext('admin', '!sudoslap <count> <target>', 'Slaps somebody around. A bunch'),
+            helptext('admin', '!simulate', 'Engage in an authentic replication of the day to day life of an APOLLO')
             }
     
     if not bot.memory.contains('url_callbacks'):
@@ -110,6 +116,14 @@ def sudoslap(bot, trigger):
 
     for i in range(0, count):
         bot.say(trigger.nick + ' slaps ' + trigger.group(2)[len(trigger.group(3)) + 1:] + ', take ' + str(i + 1))
+
+@sopel.module.commands('simulate')
+def simulate(bot, trigger):
+    if not trigger.admin:
+        return
+
+    if bot.config.apollo.simulate:
+        call(['sopel', '-c', bot.config.apollo.apollo_config])
 
 @sopel.module.commands('apollo')
 def apollo(bot, trigger):
