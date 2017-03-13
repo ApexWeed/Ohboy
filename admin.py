@@ -29,9 +29,9 @@ def setup(bot):
             helptext('admin', '!op <channel> [nick]', 'Makes you, or nick op'),
             helptext('admin', '!deop <channel> [nick]', 'Makes you, or nick not op'),
             helptext('admin', '!mode <channel> <mode> [nick]', 'Sets you, or nick to the specified mode'),
-            helptext('admin', '!kick <channel> <nick>', 'Kicks a nick from the channel'),
+            helptext('admin', '!kick <channel> <nick> <reason>', 'Kicks a nick from the channel'),
             helptext('admin', '!ban <channel> <banmask>', 'Bans a hostmask from the channel'),
-            helptext('admin', '!unban <channel> <banmask>', 'Unbans a hostmask from the channel'),
+            helptext('admin', '!unban <channel> <banmask> <reason>', 'Unbans a hostmask from the channel'),
             helptext('admin', '!kickban <channel> <nick> <banmask>', 'Bans a hostmask and kicks a nick from the channel'),
             helptext('admin', '!topic <channel> <topic>', 'Sets the topic for a channel'),
             helptext('admin', '!me <channel> <action>', 'Makes the bot perform an action in a channel'),
@@ -79,7 +79,7 @@ def deop(bot, trigger):
         bot.reply('Specify a channel')
 
 @sopel.module.commands('mode')
-def deop(bot, trigger):
+def mode(bot, trigger):
     if not trigger.admin or not trigger.is_privmsg:
         return
 
@@ -101,7 +101,11 @@ def kick(bot, trigger):
 
     if trigger.group(3):
         if trigger.group(4):
-            bot.write(('KICK', trigger.group(3), trigger.group(4)))
+            if trigger.group(5):
+                channel, nick, reason = trigger.group(2).split(' ', 2)
+                bot.write(('KICK', channel, nick), reason)
+            else:
+                bot.reply('Specify a reason')
         else:
             bot.reply('Specify a nick')
     else:
@@ -114,7 +118,7 @@ def ban(bot, trigger):
 
     if trigger.group(3):
         if trigger.group(4):
-            bot.write(('MODE', trigger.group(3), '+b', trigger.group(4)))
+            bot.write(('MODE', channel, '+b', banmask))
         else:
             bot.reply('Specify a banmask')
     else:
@@ -140,8 +144,10 @@ def kickban(bot, trigger):
     if trigger.group(3):
         if trigger.group(4):
             if trigger.group(5):
-                bot.write(('MODE', trigger.group(3), '+b', trigger.group(5)))
-                bot.write(('KICK', trigger.group(3), trigger.group(4)))
+                if trigger.group(6):
+                    channel, nick, banmask, reason = trigger.group(2).split(' ', 3)
+                bot.write(('MODE', channel, '+b', banmask))
+                bot.write(('KICK', channel, nick), reason)
             else:
                 bot.reply('Specify a banmask')
         else:
