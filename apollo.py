@@ -248,7 +248,7 @@ def torrent(id):
     json = api.request('torrent', id=id)['response']
     return u'{} - {} ({}) [{} - {} ({})] [{}] Seeds: {} Leeches: {} Snatches: {}'.format(
             get_artists(json['group']['musicInfo']),
-            json['group']['name'],
+            parser.unescape(json['group']['name']),
             json['group']['year'],
             json['torrent']['media'],
             json['torrent']['format'],
@@ -283,7 +283,7 @@ def artist(id):
 def thread(threadid):
     json = api.request('forum', type='viewthread', threadid=threadid)['response']
     return u'{} | {} - {}'.format(
-            json['threadTitle'],
+            parser.unescape(json['threadTitle']),
             json['forumName'],
             json['posts'][0]['author']['authorName']
             )
@@ -292,7 +292,7 @@ def request(id):
     json = api.request('request', id=id)['response']
     return u'{} - {} ({}) [{}] - {}'.format(
             get_artists(json['musicInfo']),
-            json['title'],
+            parser.unescape(json['title']),
             json['year'],
             u', '.join(json['tags']),
             sizeof_fmt(json['totalBounty'])
