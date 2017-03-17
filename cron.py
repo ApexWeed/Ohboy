@@ -168,12 +168,15 @@ def cronadd(bot, admin, nick, interval, mode, target, text):
 
 def crondel(bot, admin, nick, id):
     try:
+        row = bot.db.execute(
+                'SELECT owner '
+                'FROM crontab '
+                'WHERE id = ? AND enabled = 1',
+                [id]).fetchone()
+        if row == None:
+            bot.say('Cannot delete cronjob with id {}'.format(id))
+            return
         if not admin:
-            row = bot.db.execute(
-                    'SELECT owner '
-                    'FROM crontab '
-                    'WHERE id = ? AND enabled = 1',
-                    [id]).fetchone()
             if row != nick.lower():
                 bot.say('Permission denied')
                 return

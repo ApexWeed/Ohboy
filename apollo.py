@@ -123,6 +123,7 @@ def simulate(bot, trigger):
         return
 
     if bot.config.apollo.simulate:
+        bot.say('#resonance :You need to be identified to a registered account to join this channel')
         call(['sopel', '-c', bot.config.apollo.apollo_config])
 
 @sopel.module.commands('apollo')

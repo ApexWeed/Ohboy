@@ -4,6 +4,12 @@ import time
 
 launched = -1
 
+@sopel.module.event('KICK')
+@sopel.module.rule(r'.*')
+def bampersand(bot, trigger):
+    if trigger.args[1] == bot.nick:
+        bot.quit('APOLLO')
+
 @sopel.module.interval(3)
 def start(bot):
     global launched

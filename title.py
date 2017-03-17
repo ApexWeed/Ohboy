@@ -117,7 +117,11 @@ def process_urls(bot, trigger, urls):
 
 def find_title(url, verify=True):
     """Return the title for the given URL."""
-    response = requests.get(url, stream=True, verify=verify, headers=default_headers)
+    try:
+        response = requests.get(url, stream=True, verify=verify, headers=default_headers)
+    except:
+        return None
+    
     try:
         content = b''
         for byte in response.iter_content(chunk_size=512):
