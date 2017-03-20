@@ -50,7 +50,14 @@ def help(bot, trigger):
             return
 
         fs = open(bot.config.help.html_file, 'w')
-        fs.write('<html><head><title>{} command reference</title></head><body>'.format(bot.nick))
+        fs.write('<html><head><title>{} command reference</title><link href="help.css" type="text/css" rel="stylesheet" /></head><body>'.format(bot.nick))
+        fs.write('<h2>Legend</h2><ul>')
+        fs.write('<li class="owner">Owner only commands</li>')
+        fs.write('<li class="admin">Admin user+ commands</li>')
+        fs.write('<li class="registered">Registered user+ commands</li>')
+        fs.write('<li class="all">All user commands</li>')
+        fs.write('<li class="user">Commands only usable by non admins</li>')
+        fs.write('</ul>')
 
         for module, help in sorted(bot.memory['help'].items()):
             fs.write('<h2>{}</h2><p>{}</p>'.format(module, cgi.escape(help['short'])))
