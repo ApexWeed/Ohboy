@@ -48,7 +48,8 @@ def setup(bot):
             helptext('all', '!cron del <id>', 'Removes a task from crontab'),
             helptext('all', '!cron list', 'Lists your cronjobs'),
             helptext('all', '!cron list all', 'Lists all cronjobs'),
-            helptext('all', '!cron list <nick>', 'Lists cronjobs for specified nick')
+            helptext('all', '!cron list <nick>', 'Lists cronjobs for specified nick'),
+            helptext('all', '!cron edit <id> <param> <value>', 'Edits a cronjob')
             }
 
 def datetime2str(val):
@@ -122,10 +123,19 @@ def cron(bot, trigger):
         crondel(bot, trigger.admin, trigger.nick, trigger.group(4))
     elif action == 'list':
         cronlist(bot, trigger.nick, trigger.group(4))
+    elif action == 'edit':
+        try:
+            _, id, param, value = trigger.group(2).split(' ', 3)
+            id = int(id)
+            cronedit(bot, trigger.admin, trigger.nick, id, param, value)
+        except:
+            bot.say('Usage: !cron edit <id> <param> <value>')
+            return
 
 def cronadd(bot, admin, nick, interval, mode, target, text):
     if interval < 1:
         bot.say('I\'m not sure why you thought that would work')
+        return
     if admin and interval < bot.config.cron.admin_min_interval:
         bot.say('Minimum interval for admins is {} seconds'.format(str(bot.config.cron.admin_min_interval)))
         return
@@ -223,4 +233,40 @@ def cronlist(bot, user_nick, command_nick):
                     row[3],
                     row[4],
                     row[5]))
+
+def cronedit(bot, admin, nick, id, param, value):
+    try:
+        owner = bot.db.execute(
+                'SELECT owner '
+                'FROM crontab '
+                'WHERE id = ? AND enabled = 1',
+                [id]).fetchone()
+        if admin or nick == owner:
+            if param in ('target', 'interval', 'mode', 'text'):
+                if param == 'interval':
+                    try:
+                        interval = int(value)
+                        if admin and interval < bot.config.cron.admin_min_interval:
+                            bot.say('Minimum interval for admins is {} seconds'.format(str(bot.config.cron.admin_min_interval)))
+                            return
+                        if not admin and interval < bot.config.cron.user_min_interval:
+                            bot.say('Minimum interval for users is {} seconds'.format(str(bot.config.cron.user_min_interval)))
+                            return
+                    except:
+                        return
+
+                if param == 'mode' and value not in ('msg', 'action'):
+                    return
+
+                try:
+                    bot.db.execute(
+                        'UPDATE crontab '
+                        'SET {} = ? '
+                        'WHERE id = ?'.format(param),
+                        [value, id])
+                    bot.say('{} set to {}'.format(param, value))
+                except:
+                    bot.say('fucked the second query dickhead')
+    except:
+        bot.say('Couldn\'t edit crontab with id {}'.format(id))
 
