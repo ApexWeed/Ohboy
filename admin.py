@@ -175,7 +175,7 @@ def me(bot, trigger):
     
     if trigger.group(3):
         if trigger.group(4):
-            bot.msg(trigger.group(3), '\x01ACTION %s\x01' % trigger.group(2)[len(trigger.group(3)) + 1:])
+            bot.msg(trigger.group(3), '\x01ACTION {}\x01'.format(trigger.group(2)[len(trigger.group(3)) + 1:]))
         else:
             bot.notice('Specify an action', trigger.nick)
     else:
@@ -225,7 +225,7 @@ def quit(bot, trigger):
     if not trigger.owner or not trigger.is_privmsg:
         return
     
-    bot.quit(trigger.group(2) or '%s informs me I am to die' % trigger.nick)
+    bot.quit(trigger.group(2) or '{} informs me I am to die'.format(trigger.nick))
 
 @sopel.module.commands('save')
 def save(bot, trigger):
@@ -240,12 +240,12 @@ def pyver(bot, trigger):
     if not trigger.owner or not trigger.is_privmsg:
         return
 
-    bot.notice('Python %s' % sys.version, trigger.nick)
+    bot.notice('Python {}'.format(sys.version), trigger.nick)
 
 @sopel.module.commands('admin')
 def admin(bot, trigger):
     if trigger.group(3) == 'list':
-        bot.say('Admins: %s' % ', '.join(bot.config.core.admins))
+        bot.say('Admins: {}'.format(', '.join(bot.config.core.admins)))
         return
 
     if not trigger.is_privmsg and not trigger.admin:
@@ -258,7 +258,7 @@ def admin(bot, trigger):
             bot.config.core.admins = alist
             bot.config.save()
             bot.notice('You are now a bot admin', trigger.group(4))
-            bot.notice('%s added to admins' % trigger.group(4), trigger.nick)
+            bot.notice('{} added to admins'.format(trigger.group(4)), trigger.nick)
     elif trigger.group(3) == 'del':
         if trigger.group(4):
             alist = bot.config.core.admins
@@ -266,6 +266,6 @@ def admin(bot, trigger):
             bot.config.core.admins = alist
             bot.config.save()
             bot.notice('You are no longer a bot admin', trigger.group(4))
-            bot.notice('%s removed from admins' % trigger.group(4), trigger.nick)
+            bot.notice('{} removed from admins'.format(trigger.group(4)), trigger.nick)
 
 

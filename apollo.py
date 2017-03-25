@@ -25,9 +25,9 @@ class ApolloSection(sopel.config.types.StaticSection):
 def sizeof_fmt(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
         if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
+            return '{:3.1f}{}{}'.format(num, unit, suffix)
         num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+    return '{:.1f}{}{}'.format(num, 'Yi', suffix)
 
 def configure(config):
     config.define_section('apollo', ApolloSection)

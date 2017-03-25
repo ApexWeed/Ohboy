@@ -64,7 +64,7 @@ def reload(bot, trigger):
         return bot.notice('Modules reloaded', trigger.nick)
 
     if name not in sys.modules:
-        return bot.reply('%s: not loaded, try the `load` command' % name, trigger.nick)
+        return bot.reply('{}: not loaded, try the `load` command'.format(name), trigger.nick)
 
     old_module = sys.modules[name]
     if hasattr(old_module, 'unload'):
@@ -101,7 +101,7 @@ def load_module(bot, name, path, type_, nick):
 
     modified = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(mtime))
 
-    bot.notice('%r (version: %s)' % (module, modified), nick)
+    bot.notice('{:r} (version: {})'.format(module, modified), nick)
 
 @sopel.module.commands("load")
 @sopel.module.priority("low")
@@ -121,6 +121,6 @@ def load(bot, trigger):
 
     mods = sopel.loader.enumerate_modules(bot.config)
     if name not in mods:
-        return bot.notice('Module %s not found' % name, trigger.nick)
+        return bot.notice('Module {} not found'.format(name), trigger.nick)
     path, type_ = mods[name]
     load_module(bot, name, path, type_, trigger.nick)

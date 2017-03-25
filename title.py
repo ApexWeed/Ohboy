@@ -50,7 +50,7 @@ def setup(bot):
 def title(bot, trigger):
     if not trigger.group(2) or trigger.group(3) == 'status':
         status = bot.db.get_nick_value(trigger.nick, 'title')
-        bot.notice('Your titles are set to %s' % status or 'off', trigger.nick)
+        bot.notice('Your titles are set to {}'.format(status or 'off'), trigger.nick)
 
     if trigger.group(3) == 'on':
         bot.db.set_nick_value(trigger.nick, 'title', 'on')
@@ -80,7 +80,7 @@ def title_auto(bot, trigger):
     bot.memory['last_seen_url'][trigger.sender] = urls[-1]
 
     for title, domain in results[:4]:
-        message = '[ %s ] - %s' % (title, domain)
+        message = '[ {} ] - {}'.format(title, domain)
         # Guard against responding to other instances of this bot.
         if message != trigger:
             if trigger.sender in bot.channels:
