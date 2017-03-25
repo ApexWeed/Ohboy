@@ -111,11 +111,11 @@ def cron(bot, trigger):
             _, interval, mode, target, text = trigger.group(2).split(' ', 4)
             interval = int(interval)
         except:
-            bot.say('Usage: !cron add <interval> <mode> <target> <text>')
+            bot.notice('Usage: !cron add <interval> <mode> <target> <text>', trigger.nick)
             return
         
         if trigger.is_privmsg:
-            bot.say('Do it in the channel I dare you')
+            bot.notice('Do it in the channel I dare you', trigger.nick)
             return
 
         cronadd(bot, trigger.admin, trigger.nick, interval, mode, target, text)
@@ -129,21 +129,21 @@ def cron(bot, trigger):
             id = int(id)
             cronedit(bot, trigger.admin, trigger.nick, id, param, value)
         except:
-            bot.say('Usage: !cron edit <id> <param> <value>')
+            bot.notice('Usage: !cron edit <id> <param> <value>', trigger.nick)
             return
 
 def cronadd(bot, admin, nick, interval, mode, target, text):
     if interval < 1:
-        bot.say('I\'m not sure why you thought that would work')
+        bot.notice('I\'m not sure why you thought that would work', nick)
         return
     if admin and interval < bot.config.cron.admin_min_interval:
-        bot.say('Minimum interval for admins is {} seconds'.format(str(bot.config.cron.admin_min_interval)))
+        bot.notice('Minimum interval for admins is {} seconds'.format(str(bot.config.cron.admin_min_interval)), nick)
         return
     if not admin and interval < bot.config.cron.user_min_interval:
-        bot.say('Minimum interval for users is {} seconds'.format(str(bot.config.cron.user_min_interval)))
+        bot.notice('Minimum interval for users is {} seconds'.format(str(bot.config.cron.user_min_interval)), nick)
         return
     if not mode in ('msg', 'action'):
-        bot.say('Mode must be one of msg or action')
+        bot.notice('Mode must be one of msg or action', nick)
         return
 
     try:
@@ -156,10 +156,10 @@ def cronadd(bot, admin, nick, interval, mode, target, text):
         if count != 0:
             count = count[0]
         if admin and count >= bot.config.cron.admin_max_crons:
-            bot.say('Max cronjobs for admins is {}'.format(str(bot.config.cron.admin_max_crons)))
+            bot.notice('Max cronjobs for admins is {}'.format(str(bot.config.cron.admin_max_crons)), nick)
             return
         if not admin and count >= bot.config.cron.user_max_crons:
-            bot.say('Max cronjobs for users is {}'.format(str(bot.config.cron.user_max_crons)))
+            bot.notice('Max cronjobs for users is {}'.format(str(bot.config.cron.user_max_crons)), nick)
             return
 
         bot.db.execute(
@@ -174,7 +174,7 @@ def cronadd(bot, admin, nick, interval, mode, target, text):
                 'LIMIT 1').fetchone()
         bot.say('Cronjob registered, ID: {}, next run: {}'.format(row[0], row[1]))
     except:
-        bot.say('Error adding cron')
+        bot.notice('Error adding cron', nick)
 
 def crondel(bot, admin, nick, id):
     try:
@@ -184,11 +184,11 @@ def crondel(bot, admin, nick, id):
                 'WHERE id = ? AND enabled = 1',
                 [id]).fetchone()
         if row == None:
-            bot.say('Cannot delete cronjob with id {}'.format(id))
+            bot.notice('Cannot delete cronjob with id {}'.format(id), nick)
             return
         if not admin:
             if row != nick.lower():
-                bot.say('Permission denied')
+                bot.notice('Permission denied', nick)
                 return
         bot.db.execute(
                 'UPDATE crontab '
@@ -197,7 +197,7 @@ def crondel(bot, admin, nick, id):
                 [id])
         bot.say('Deleted cronjob with id {}'.format(id))
     except:
-        bot.say('Cannot delete cronjob with id {}'.format(id))
+        bot.notice('Cannot delete cronjob with id {}'.format(id), nick)
 
 def cronlist(bot, user_nick, command_nick):
     rows = None
@@ -220,11 +220,11 @@ def cronlist(bot, user_nick, command_nick):
                     'WHERE owner = ? AND enabled = 1',
                     [command_nick.lower()])
     except:
-        bot.say('Couldn\'t get cronjobs')
+        bot.notice('Couldn\'t get cronjobs', command_nick)
     
     if rows != None:
         for row in rows:
-            bot.say('{} ({}): /{} {} {}, every {} seconds, last ran: {}, next run: {}'.format(
+            bot.notice('{} ({}): /{} {} {}, every {} seconds, last ran: {}, next run: {}'.format(
                     row[1],
                     row[0],
                     'me' if row[6] == 'action' else 'msg',
@@ -232,7 +232,7 @@ def cronlist(bot, user_nick, command_nick):
                     row[7],
                     row[3],
                     row[4],
-                    row[5]))
+                    row[5]), command_nick)
 
 def cronedit(bot, admin, nick, id, param, value):
     try:
@@ -247,10 +247,10 @@ def cronedit(bot, admin, nick, id, param, value):
                     try:
                         interval = int(value)
                         if admin and interval < bot.config.cron.admin_min_interval:
-                            bot.say('Minimum interval for admins is {} seconds'.format(str(bot.config.cron.admin_min_interval)))
+                            bot.notice('Minimum interval for admins is {} seconds'.format(str(bot.config.cron.admin_min_interval)), trigger.nick)
                             return
                         if not admin and interval < bot.config.cron.user_min_interval:
-                            bot.say('Minimum interval for users is {} seconds'.format(str(bot.config.cron.user_min_interval)))
+                            bot.notice('Minimum interval for users is {} seconds'.format(str(bot.config.cron.user_min_interval)), trigger.nick)
                             return
                     except:
                         return
@@ -266,7 +266,7 @@ def cronedit(bot, admin, nick, id, param, value):
                         [value, id])
                     bot.say('{} set to {}'.format(param, value))
                 except:
-                    bot.say('fucked the second query dickhead')
+                    bot.notice('fucked the second query dickhead', nick)
     except:
-        bot.say('Couldn\'t edit crontab with id {}'.format(id))
+        bot.notice('Couldn\'t edit crontab with id {}'.format(id), nick)
 

@@ -50,20 +50,20 @@ def setup(bot):
 def title(bot, trigger):
     if not trigger.group(2) or trigger.group(3) == 'status':
         status = bot.db.get_nick_value(trigger.nick, 'title')
-        bot.say('Your titles are set to %s' % status or 'off', trigger.nick)
+        bot.notice('Your titles are set to %s' % status or 'off', trigger.nick)
 
     if trigger.group(3) == 'on':
         bot.db.set_nick_value(trigger.nick, 'title', 'on')
-        bot.say('Titles enabled', trigger.nick)
+        bot.notice('Titles enabled', trigger.nick)
     elif trigger.group(3) == 'privmsg':
         bot.db.set_nick_value(trigger.nick, 'title', 'privmsg')
-        bot.say('Titles enabled (privmsg)', trigger.nick)
+        bot.notice('Titles enabled (privmsg)', trigger.nick)
     elif trigger.group(3) == 'notice':
         bot.db.set_nick_value(trigger.nick, 'title', 'notice')
-        bot.say('Titles enabled (notice)', trigger.nick)
+        bot.notice('Titles enabled (notice)', trigger.nick)
     elif trigger.group(3) == 'off':
         bot.db.set_nick_value(trigger.nick, 'title', 'off')
-        bot.say('Titles disabled', trigger.nick)
+        bot.notice('Titles disabled', trigger.nick)
 
 @sopel.module.rule('(?u).*(https?://\S+).*')
 def title_auto(bot, trigger):
@@ -87,7 +87,7 @@ def title_auto(bot, trigger):
                 for user in bot.channels[trigger.sender].users:
                     enabled = bot.db.get_nick_value(user, 'title') or 'off'
                     if enabled == 'on' or enabled == 'notice':
-                        bot.reply(message, user, '', True)
+                        bot.notice(message, user)
                     elif enabled == 'privmsg':
                         bot.say(message, user)
 

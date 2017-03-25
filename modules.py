@@ -15,4 +15,4 @@ def setup(bot):
 
 @sopel.module.commands('modules')
 def modules(bot, trigger):
-    bot.say('Modules loaded: ' + ', '.join(sopel.loader.enumerate_modules(bot.config)))
+    bot.notice('Modules loaded: ' + ', '.join(sopel.loader.enumerate_modules(bot.config)), trigger.nick)

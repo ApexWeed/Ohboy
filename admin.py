@@ -63,7 +63,7 @@ def op(bot, trigger):
         else:
             bot.write(('MODE', trigger.group(3), '+o', trigger.nick))
     else:
-        bot.reply('Specify a channel')
+        bot.notice('Specify a channel', trigger.nick)
 
 @sopel.module.commands('deop')
 def deop(bot, trigger):
@@ -76,7 +76,7 @@ def deop(bot, trigger):
         else:
             bot.write(('MODE', trigger.group(3), '-o', trigger.nick))
     else:
-        bot.reply('Specify a channel')
+        bot.notice('Specify a channel', trigger.nick)
 
 @sopel.module.commands('mode')
 def mode(bot, trigger):
@@ -90,9 +90,9 @@ def mode(bot, trigger):
             else:
                 bot.write(('MODE', trigger.group(3), trigger.group(4), trigger.nick))
         else:
-            bot.reply('Specify a mode')
+            bot.notice('Specify a mode', trigger.nick)
     else:
-        bot.reply('Specify a channel')
+        bot.notice('Specify a channel', trigger.nick)
 
 @sopel.module.commands('kick')
 def kick(bot, trigger):
@@ -120,9 +120,9 @@ def ban(bot, trigger):
         if trigger.group(4):
             bot.write(('MODE', channel, '+b', banmask))
         else:
-            bot.reply('Specify a banmask')
+            bot.notice('Specify a banmask', trigger.nick)
     else:
-        bot.reply('Specify a channel')
+        bot.notice('Specify a channel', trigger.nick)
 
 @sopel.module.commands('unban')
 def unban(bot, trigger):
@@ -132,9 +132,9 @@ def unban(bot, trigger):
         if trigger.group(4):
             bot.write(('MODE', trigger.group(3), '-b', trigger.group(4)))
         else:
-            bot.reply('Specify a banmask')
+            bot.notice('Specify a banmask', trigger.nick)
     else:
-        bot.reply('Specify a channel')
+        bot.notice('Specify a channel', trigger.nick)
 
 @sopel.module.commands('kickban')
 def kickban(bot, trigger):
@@ -149,11 +149,11 @@ def kickban(bot, trigger):
                 bot.write(('MODE', channel, '+b', banmask))
                 bot.write(('KICK', channel, nick), reason)
             else:
-                bot.reply('Specify a banmask')
+                bot.notice('Specify a banmask', trigger.nick)
         else:
-            bot.reply('Specify a nick')
+            bot.notice('Specify a nick', trigger.nick)
     else:
-        bot.reply('Specify a channel')
+        bot.notice('Specify a channel', trigger.nick)
 
 @sopel.module.commands('topic')
 def topic(bot, trigger):
@@ -164,9 +164,9 @@ def topic(bot, trigger):
         if trigger.group(4):
             bot.write(('TOPIC', trigger.group(3)), trigger.group(2)[len(trigger.group(3)) + 1:])
         else:
-            bot.reply('Specify the topic')
+            bot.notice('Specify the topic', trigger.nick)
     else:
-        bot.reply('Specify the channel')
+        bot.notice('Specify the channel', trigger.nick)
 
 @sopel.module.commands('me')
 def me(bot, trigger):
@@ -177,9 +177,9 @@ def me(bot, trigger):
         if trigger.group(4):
             bot.msg(trigger.group(3), '\x01ACTION %s\x01' % trigger.group(2)[len(trigger.group(3)) + 1:])
         else:
-            bot.reply('Specify an action')
+            bot.notice('Specify an action', trigger.nick)
     else:
-        bot.reply('Specify a target')
+        bot.notice('Specify a target', tuigger.nick)
 
 @sopel.module.commands('msg')
 def msg(bot, trigger):
@@ -190,9 +190,9 @@ def msg(bot, trigger):
         if trigger.group(4):
             bot.msg(trigger.group(3), trigger.group(2)[len(trigger.group(3)) + 1:])
         else:
-            bot.reply('Specify a message')
+            bot.notice('Specify a message', trigger.nick)
     else:
-        bot.reply('Specify a target')
+        bot.notice('Specify a target', trigger.nick)
 
 @sopel.module.commands('join')
 def join(bot, trigger):
@@ -233,13 +233,14 @@ def save(bot, trigger):
         return
 
     bot.config.save()
+    bot.notice('Config saved', trigger.nick)
 
 @sopel.module.commands('pyver')
 def pyver(bot, trigger):
     if not trigger.owner or not trigger.is_privmsg:
         return
 
-    bot.reply('Python %s' % sys.version)
+    bot.notice('Python %s' % sys.version, trigger.nick)
 
 @sopel.module.commands('admin')
 def admin(bot, trigger):
@@ -256,15 +257,15 @@ def admin(bot, trigger):
             alist.append(trigger.group(4))
             bot.config.core.admins = alist
             bot.config.save()
-            bot.say('You are now a bot admin', trigger.group(4))
-            bot.reply('%s added to admins' % trigger.group(4))
+            bot.notice('You are now a bot admin', trigger.group(4))
+            bot.notice('%s added to admins' % trigger.group(4), trigger.nick)
     elif trigger.group(3) == 'del':
         if trigger.group(4):
             alist = bot.config.core.admins
             alist.remove(trigger.group(4))
             bot.config.core.admins = alist
             bot.config.save()
-            bot.say('You are no longer a bot admin', trigger.group(4))
-            bot.reply('%s removed from admins' % trigger.group(4))
+            bot.notice('You are no longer a bot admin', trigger.group(4))
+            bot.notice('%s removed from admins' % trigger.group(4), trigger.nick)
 
 

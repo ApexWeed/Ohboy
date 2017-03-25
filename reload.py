@@ -31,7 +31,7 @@ def conf_reload(bot, trigger):
     if not trigger.admin:
         return
     bot.config.__init__(bot.config.filename)
-    bot.reply('Configs reloaded. Probably')
+    bot.notice('Configs reloaded', trigger.nick)
     reload(bot, trigger)
 
 @sopel.module.commands("reload")
@@ -61,10 +61,10 @@ def reload(bot, trigger):
         bot._command_groups = collections.defaultdict(list)
 
         bot.setup()
-        return bot.reply('done')
+        return bot.notice('Modules reloaded', trigger.nick)
 
     if name not in sys.modules:
-        return bot.reply('%s: not loaded, try the `load` command' % name)
+        return bot.reply('%s: not loaded, try the `load` command' % name, trigger.nick)
 
     old_module = sys.modules[name]
     if hasattr(old_module, 'unload'):
@@ -86,10 +86,10 @@ def reload(bot, trigger):
 
     modules = sopel.loader.enumerate_modules(bot.config)
     path, type_ = modules[name]
-    load_module(bot, name, path, type_)
+    load_module(bot, name, path, type_, trigger.nick)
 
 
-def load_module(bot, name, path, type_):
+def load_module(bot, name, path, type_, nick):
     module, mtime = sopel.loader.load_module(name, path, type_)
     relevant_parts = sopel.loader.clean_module(module, bot.config)
 
@@ -101,7 +101,7 @@ def load_module(bot, name, path, type_):
 
     modified = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(mtime))
 
-    bot.reply('%r (version: %s)' % (module, modified))
+    bot.notice('%r (version: %s)' % (module, modified), nick)
 
 @sopel.module.commands("load")
 @sopel.module.priority("low")
@@ -114,13 +114,13 @@ def load(bot, trigger):
     name = trigger.group(2)
     path = ''
     if not name:
-        return bot.reply('Load what?')
+        return bot.notice('Load what?', trigger.nick)
 
     if name in sys.modules:
-        return bot.reply('Module already loaded, use reload')
+        return bot.notice('Module already loaded, use reload', trigger.nick)
 
     mods = sopel.loader.enumerate_modules(bot.config)
     if name not in mods:
-        return bot.reply('Module %s not found' % name)
+        return bot.notice('Module %s not found' % name, trigger.nick)
     path, type_ = mods[name]
-    load_module(bot, name, path, type_)
+    load_module(bot, name, path, type_, trigger.nick)

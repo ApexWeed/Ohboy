@@ -29,12 +29,6 @@ def setup(bot):
             helptext('admin', '!help genhtml', 'Generates a new HTML help page')
             }
 
-def say_direct(bot, target, message):
-    args = ('PRIVMSG', target)
-    bot.write(args, message[:400])
-    if len(message) > 400:
-        say_direct(bot, target, message)
-
 @sopel.module.commands('help')
 def help(bot, trigger):
     if not trigger.is_privmsg:
@@ -42,9 +36,9 @@ def help(bot, trigger):
 
     module = trigger.group(3)
     if not module or module == 'all':
-        bot.say('Use !help <module> for module help')
+        bot.notice('Use !help <module> for module help', trigger.nick)
         for key, value in sorted(bot.memory['help'].items()):
-            say_direct(bot, trigger.nick, '%s: %s' % (key, value['short']))
+            bot.notice('%s: %s' % (key, value['short']), trigger.nick)
     elif module == 'genhtml':
         if not trigger.admin or not bot.config.help.gen_html or not os.path.isfile(bot.config.help.html_file):
             return
@@ -68,16 +62,16 @@ def help(bot, trigger):
                 fs.write('</ul>')
 
         fs.write('</body></html>')
-        bot.reply('Generated!')
+        bot.notice('HTML generated!', trigger.nick)
     elif module in bot.memory['help']:
         if 'long' in bot.memory['help'][module]:
             count = 0
             for cmd in sorted(bot.memory['help'][module]['long'], key=attrgetter('command')):
                 if cmd.perms == 'all' or (cmd.perms == 'admin' and trigger.admin) or (cmd.perms == 'owner' and trigger.owner) or (cmd.perms == 'user' and not trigger.admin):
-                    say_direct(bot, trigger.nick, '%s: %s' % (cmd.command, cmd.line))
+                    bot.notice('%s: %s' % (cmd.command, cmd.line), trigger.nick)
                     count = count + 1
             if count == 0:
-                bot.say('No extended help available for %s' % module)
+                bot.notice('No extended help available for %s' % module, trigger.nick)
         else:
-            bot.say('No extended help available for %s' % module)
+            bot.notice('No extended help available for %s' % module, trigger.nick)
 
