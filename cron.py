@@ -32,7 +32,8 @@ def setup(bot):
                 'lastrun DATETIME, '
                 'nextrun DATETIME, '
                 'mode STRING, '
-                'text STRING)'
+                'text STRING, '
+                'enabled INTEGER)'
         )
 
     sqlite3.register_adapter(datetime, datetime2str)
