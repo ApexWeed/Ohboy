@@ -101,7 +101,7 @@ def load_module(bot, name, path, type_, nick):
 
     modified = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(mtime))
 
-    bot.notice('{:r} (version: {})'.format(module, modified), nick)
+    bot.notice('{} (version: {})'.format(module, modified), nick)
 
 @sopel.module.commands("load")
 @sopel.module.priority("low")
