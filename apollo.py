@@ -141,6 +141,10 @@ def apollo(bot, trigger):
             bot.say(user(trigger.group(4)))
         else:
             json = api.request('usersearch', search=args)
+            if len(json['response']['results']) == 1:
+                bot.say(user(json['response']['results'][0]['userId']))
+                return
+
             res = u'Results: {}'.format(', '.join([u'{} ({})'.format(s_user['username'], s_user['userId']) for s_user in json['response']['results']]))
             bot.say(res)
     elif command == 'stats':
