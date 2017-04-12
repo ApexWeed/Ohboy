@@ -194,14 +194,14 @@ def apollo(bot, trigger):
                 bot.say(u'{} ({} results)'.format(json['caption'], len(json['results'])))
                 for s_user in json['results']:
                     bot.say(u'{} ({}) Torrents: {} Up: {} ({}/s) Down: {} ({}/s) Joined: {}'.format(
-                        s_user['username'],
+                        parser.unescape(s_user['username']),
                         s_user['id'],
                         s_user['numUploads'],
                         sizeof_fmt(s_user['uploaded']),
                         sizeof_fmt(s_user['upSpeed']),
                         sizeof_fmt(s_user['downloaded']),
                         sizeof_fmt(s_user['downSpeed']),
-                        user['joinDate']
+                        s_user['joinDate']
                         ))
 
 def title(bot, trigger, match):
@@ -238,17 +238,24 @@ def title(bot, trigger, match):
             return request(args['id'])
         else:
             return 'Apollo - Requests'
+    elif match.group(1) == 'collages':
+        if 'id' in args:
+            return collage(args['id'])
+        else:
+            return 'Apollo - Collages'
     else:
         return 'Apollo'
 
 def user(id):
     json = api.request('user', id=id)
-    return u'{} ({}): {} U {} D ({}) joined {}'.format(
-            json['response']['username'],
-            json['response']['personal']['class'],
+    return u'{} ({}): {} U {} D ({}) joined {} last seen {}'.format(
+            parser.unescape(json['response']['username']),
+            parser.unescape(json['response']['personal']['class']),
             sizeof_fmt(json['response']['stats']['uploaded'] or 0),
             sizeof_fmt(json['response']['stats']['downloaded'] or 0),
-            json['response']['stats']['ratio'], json['response']['stats']['joinedDate']
+            json['response']['stats']['ratio'],
+            json['response']['stats']['joinedDate'],
+            json['response']['stats']['lastAccess'] or 'being paranoid'
             )
 
 def torrent(id):
@@ -260,7 +267,7 @@ def torrent(id):
             json['torrent']['media'],
             json['torrent']['format'],
             encoding(json['torrent']),
-            ', '.join(json['group']['tags']),
+            parser.unescape(', '.join(json['group']['tags'][:10])),
             json['torrent']['seeders'],
             json['torrent']['leechers'],
             json['torrent']['snatched']
@@ -268,18 +275,21 @@ def torrent(id):
 
 def group(id):
     json = api.request('torrentgroup', id=id)['response']
-    return u'{} - {} ({}) [{}]'.format(
+    return u'{} - {} ({}) [{}] Seeds: {} Leeches: {} Snatches: {}'.format(
             get_artists(json['group']['musicInfo']),
             json['group']['name'],
             json['group']['year'],
-            ', '.join(json['group']['tags'])
+            parser.unescape(', '.join(json['group']['tags'][:10])),
+            sum(x['seeders'] for x in json['torrents']),
+            sum(x['leechers'] for x in json['torrents']),
+            sum(x['snatched'] for x in json['torrents'])
             )
 
 def artist(id):
     json = api.request('artist', id=id)['response']
     return u'{} [{}] - Groups: {} Torrents: {} Seeds: {} Leeches: {} Snatches: {}'.format(
-            json['name'],
-            u', '.join(x['name'] for x in json['tags']),
+            parser.unescape(json['name']),
+            parser.unescape(u', '.join((x['name'] for x in json['tags'])[:10])),
             json['statistics']['numGroups'],
             json['statistics']['numTorrents'],
             json['statistics']['numSeeders'],
@@ -291,8 +301,8 @@ def thread(threadid):
     json = api.request('forum', type='viewthread', threadid=threadid)['response']
     return u'{} | {} - {}'.format(
             parser.unescape(json['threadTitle']),
-            json['forumName'],
-            json['posts'][0]['author']['authorName']
+            parser.unescape(json['forumName']),
+            parser.unescape(json['posts'][0]['author']['authorName'])
             )
 
 def request(id):
@@ -301,8 +311,16 @@ def request(id):
             get_artists(json['musicInfo']),
             parser.unescape(json['title']),
             json['year'],
-            u', '.join(json['tags']),
+            parser.unescape(u', '.join(json['tags'])),
             sizeof_fmt(json['totalBounty'])
+            )
+
+def collage(id):
+    json = api.request('collage', id=id)['response']
+    return u'{} collage: {}, {} torrents'.format(
+            parser.unescape(json['collageCategoryName']),
+            parser.unescape(json['name']),
+            len(json['torrentGroupIDList'])
             )
 
 def get_artists(json):
@@ -356,7 +374,7 @@ def get_artists(json):
     elif len(djs) > 2:
         val = 'Various DJs'
 
-    return val
+    return parser.unescape(val)
 
 def encoding(json):
     val = json['encoding']
