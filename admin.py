@@ -168,7 +168,7 @@ def topic(bot, trigger):
     else:
         bot.notice('Specify the channel', trigger.nick)
 
-@sopel.module.commands('me')
+@sopel.module.commands('me', 'action')
 def me(bot, trigger):
     if not trigger.admin or not trigger.is_privmsg:
         return

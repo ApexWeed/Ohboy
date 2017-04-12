@@ -27,6 +27,9 @@ def setup(bot):
 
 @sopel.module.rule('(.*)')
 def badwords_trigger(bot, trigger):
+    if len(bot.config.badwords.badwords) == 0:
+        return
+
     if not trigger.admin and not trigger.is_privmsg:
         try:
             word = next(x for x in bot.config.badwords.badwords if x in trigger.group(1).lower())
@@ -38,13 +41,13 @@ def badwords_trigger(bot, trigger):
 def badwords(bot, trigger):
     if not trigger.group(3) or trigger.group(3) == 'list':
         bot.say('Bad words: %s' % ', '.join(bot.config.badwords.badwords))
-    elif trigger.group(3) == 'add' and trigger.admin:
+    elif trigger.group(3) == 'add' and trigger.group(4) and trigger.admin:
         wlist = bot.config.badwords.badwords
         wlist.append(trigger.group(2)[len(trigger.group(3)) + 1:])
         bot.config.badwords.badwords = wlist
         bot.say('Bad words: %s' % ', '.join(bot.config.badwords.badwords))
         bot.config.save()
-    elif trigger.group(3) == 'del' and trigger.admin:
+    elif trigger.group(3) == 'del' and trigger.group(4) and trigger.admin:
         wlist = bot.config.badwords.badwords
         wlist.remove(trigger.group(2)[len(trigger.group(3)) + 1:])
         bot.config.badwords.badwords = wlist
