@@ -1,6 +1,7 @@
 import sopel.module
 import sys
 import collections
+import json
 
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
@@ -39,14 +40,14 @@ def stats(bot, trigger):
             wpl = 0
         bot.say('Stats for ' + trigger.group(3) + ': words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wpl))
     else:
-        wc = bot.db.execute(
+        wc = json.loads(bot.db.execute(
                 'SELECT SUM(value) FROM nick_values '
-                'WHERE key = ?',
-                ['wc']).fetchone()[0]
-        lc = bot.db.execute(
+                'WHERE `key` = ?',
+                ['wc']).fetchone()[0].decode('utf-8'))
+        lc = json.loads(bot.db.execute(
                 'SELECT SUM(value) FROM nick_values '
-                'WHERE key = ?',
-                ['lc']).fetchone()[0]
+                'WHERE `key` = ?',
+                ['lc']).fetchone()[0].decode('utf-8'))
         if lc > 0:
             wpl = wc / lc
         else:
