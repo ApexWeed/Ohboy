@@ -93,19 +93,31 @@ def save(bot):
 
 @sopel.module.commands('slap')
 def slap(bot, trigger):
+    if 'apollo' in bot.config.core.host:
+        return
+
     if trigger.group(2):
         bot.say(trigger.nick + ' slaps ' + trigger.group(2))
 
 @sopel.module.commands('sandwich')
 def sandwich(bot, trigger):
+    if 'apollo' in bot.config.core.host:
+        return
+
     bot.say('Make it yourself, ' + trigger.nick)
 
 @sopel.module.commands('sudosandwich')
 def sudosandwich(bot, trigger):
+    if 'apollo' in bot.config.core.host:
+        return
+
     bot.say('Here you go, ' + trigger.nick + ' [sandwich]')
 
 @sopel.module.commands('sudoslap')
 def sudoslap(bot, trigger):
+    if 'apollo' in bot.config.core.host:
+        return
+
     if not trigger.admin or not trigger.group(3) or not trigger.group(4):
         return
 
@@ -247,15 +259,23 @@ def title(bot, trigger, match):
         return 'Apollo'
 
 def user(id):
-    json = api.request('user', id=id)
-    return u'{} ({}): {} U {} D ({}) joined {} last seen {}'.format(
-            parser.unescape(json['response']['username']),
-            parser.unescape(json['response']['personal']['class']),
-            sizeof_fmt(json['response']['stats']['uploaded'] or 0),
-            sizeof_fmt(json['response']['stats']['downloaded'] or 0),
-            json['response']['stats']['ratio'],
-            json['response']['stats']['joinedDate'],
-            json['response']['stats']['lastAccess'] or 'being paranoid'
+    json = api.request('user', id=id)['response']
+    return u'{} ({}): {} U {} D ({}) joined {} last seen {}, ranks: UL {} DL {} UP {} Req {} Bounty {} Posts {} Artists {} Overall {}'.format(
+            parser.unescape(json['username']),
+            parser.unescape(json['personal']['class']),
+            sizeof_fmt(json['stats']['uploaded'] or 0),
+            sizeof_fmt(json['stats']['downloaded'] or 0),
+            json['stats']['ratio'],
+            json['stats']['joinedDate'],
+            json['stats']['lastAccess'] or 'being paranoid',
+            json['ranks']['uploaded'] or 0,
+            json['ranks']['downloaded'] or 0,
+            json['ranks']['uploads'] or 0,
+            json['ranks']['requests'] or 0,
+            json['ranks']['bounty'] or 0,
+            json['ranks']['posts'] or 0,
+            json['ranks']['artists'] or 0,
+            json['ranks']['overall'] or 0
             )
 
 def torrent(id):
