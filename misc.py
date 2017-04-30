@@ -5,9 +5,14 @@ def pong(bot, trigger):
     bot.say('pong')
 
 @sopel.module.rule(r'.*boob.*')
+@sopel.module.rule(r'.*bewb.*')
 def boobs(bot, trigger):
     bot.action('jiggles')
 
-@sopel.module.rule(r'^\.bang')
+@sopel.module.rule(r'^\.bang$')
 def bang(bot, trigger):
     bot.say('{} is a bad guy'.format(trigger.nick))
+
+@sopel.module.rule(r'^\.badguys$')
+def badguys(bot, trigger):
+    bot.say('.killers')
