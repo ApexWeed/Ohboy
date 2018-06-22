@@ -6,6 +6,7 @@ admin.py - Sopel admin module that actually works
 import sopel.module
 import collections
 import sys
+import importlib
 
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
@@ -194,6 +195,19 @@ def msg(bot, trigger):
     else:
         bot.notice('Specify a target', trigger.nick)
 
+@sopel.module.commands('notice')
+def notice(bot, trigger):
+    if not trigger.admin or not trigger.is_privmsg:
+        return
+
+    if trigger.group(3):
+        if trigger.group(4):
+            bot.notice(trigger.group(2)[len(trigger.group(3)) + 1:], trigger.group(3))
+        else:
+            bot.notice('Specify a message', trigger.nick)
+    else:
+        bot.notice('Specify a target', trigger.nick)
+
 @sopel.module.commands('join')
 def join(bot, trigger):
     if not trigger.admin or not trigger.is_privmsg:
@@ -237,10 +251,10 @@ def save(bot, trigger):
 
 @sopel.module.commands('pyver')
 def pyver(bot, trigger):
-    if not trigger.owner or not trigger.is_privmsg:
+    if not trigger.owner:
         return
 
-    bot.notice('Python {}'.format(sys.version), trigger.nick)
+    bot.say('Python {}'.format(sys.version))
 
 @sopel.module.commands('admin')
 def admin(bot, trigger):
@@ -248,7 +262,7 @@ def admin(bot, trigger):
         bot.say('Admins: {}'.format(', '.join(bot.config.core.admins)))
         return
 
-    if not trigger.is_privmsg and not trigger.admin:
+    if not trigger.is_privmsg and not trigger.owner:
         return
 
     if trigger.group(3) == 'add':
@@ -268,4 +282,28 @@ def admin(bot, trigger):
             bot.notice('You are no longer a bot admin', trigger.group(4))
             bot.notice('{} removed from admins'.format(trigger.group(4)), trigger.nick)
 
+@sopel.module.commands('conf')
+def conf(bot, trigger):
+    if not trigger.is_privmsg or not trigger.owner:
+        return
 
+    if trigger.group(3) == 'get':
+        if trigger.group(4):
+            bot.notice('{}: {}'.format(trigger.group(4), eval(trigger.group(4))), trigger.nick)
+
+@sopel.module.commands('exec')
+def execute(bot, trigger):
+    if not trigger.is_privmsg or not trigger.owner:
+        return
+
+    if trigger.group(3):
+        bot.notice('Doing the big {}'.format(trigger.group(2), trigger.nick))
+        exec(trigger.group(2).replace('\\n', '\n'))
+
+@sopel.module.commands('rules')
+def rules(bot, trigger):
+    if not trigger.is_privmsg or not trigger.owner:
+        return
+
+    for line in bot._callables['medium'].keys()[0].pattern.split('\n'):
+        bot.say(line)

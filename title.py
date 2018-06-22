@@ -28,7 +28,7 @@ max_bytes = 655360
 
 def setup(bot):
     global url_finder
-    url_finder = re.compile(r'(?u)((?:http|https|ftp)(?:://\S+))', re.IGNORECASE)
+    url_finder = re.compile(r'(?u)(https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*))', re.IGNORECASE)
 
     if not bot.memory.contains('last_seen_url'):
         bot.memory['last_seen_url'] = tools.SopelMemory()

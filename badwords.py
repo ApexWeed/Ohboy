@@ -50,6 +50,6 @@ def badwords(bot, trigger):
     elif trigger.group(3) == 'del' and trigger.group(4) and trigger.admin:
         wlist = bot.config.badwords.badwords
         wlist.remove(trigger.group(2)[len(trigger.group(3)) + 1:])
-        bot.config.badwords.badwords = wlist
+        bot.config.badwords.badwords = list(filter(None, wlist))
         bot.say('Bad words: %s' % ', '.join(bot.config.badwords.badwords))
         bot.config.save()

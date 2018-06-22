@@ -6,21 +6,33 @@ import urlparse
 import re
 import cPickle as pickle
 import os
+import datetime
+import requests
 from subprocess import call
 
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
 api = None
 parser = HTMLParser.HTMLParser()
-regex = re.compile(r"https://apollo\.rip/(.*?)\.php\??(.*)")
+regex = re.compile(r"(?u)https://apollo\.rip/(.*?)\.php\??([-a-zA-Z0-9@:%_\+.~#?&//=]*)")
+sudoer = ''
+sudotime = datetime.datetime.utcnow()
+sudocount = 0
 
 class ApolloSection(sopel.config.types.StaticSection):
     username = sopel.config.types.ValidatedAttribute('username')
     password = sopel.config.types.ValidatedAttribute('password')
     server = sopel.config.types.ValidatedAttribute('server')
+    api = sopel.config.types.ValidatedAttribute('api', bool, default=False)
+    tracker = sopel.config.types.ValidatedAttribute('tracker')
     cookie_file = sopel.config.types.FilenameAttribute('cookie_file', relative=False)
     simulate = sopel.config.types.ValidatedAttribute('simulate', bool, default=False)
     apollo_config = sopel.config.types.FilenameAttribute('apollo_config', relative=True)
+    status_channel = sopel.config.types.ValidatedAttribute('status_channel')
+    check_status = sopel.config.types.ValidatedAttribute('check_status', bool, default=False)
+    status_format = sopel.config.types.ValidatedAttribute('status_format', str, default='Status - SITE {} / TRACKER {} / ANNOUNCE {} / IRC UP / BOT {}')
+    bot = sopel.config.types.ValidatedAttribute('bot')
+    bot_channel = sopel.config.types.ValidatedAttribute('bot_channel')
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -34,15 +46,23 @@ def configure(config):
     config.apollo.configure_setting('username', 'Username for Apollo integration')
     config.apollo.configure_setting('password', 'Password for Apollo integration')
     config.apollo.configure_setting('server', 'Server for Apollo integration')
+    config.apollo.configure_setting('api', 'Whether to enable API')
+    config.apollo.configure_setting('tracker', 'Tracker URL to check')
     config.apollo.configure_setting('cookie_file', 'File to store Apollo session data')
     config.apollo.configure_setting('simulate', 'Whether to allow simulation')
     config.apollo.configure_setting('apollo_config', 'Path to config for apollo simulator')
+    config.apollo.configure_setting('status_channel', 'The channel to annouce status in')
+    config.apollo.configure_setting('check_status', 'Whether to check apollo status')
+    config.apollo.configure_setting('status_format', 'Format to output status')
+    config.apollo.configure_setting('bot', 'Name of the bot to check')
+    config.apollo.configure_setting('bot_channel', 'Channel the bot idles in')
 
 def setup(bot):
     global api
     bot.config.define_section('apollo', ApolloSection)
+#    api = 'wow'
 
-    if not api:
+    if bot.config.apollo.api == False or not api:
         if os.path.isfile(bot.config.apollo.cookie_file):
             try:
                 cookies = pickle.load(open(bot.config.apollo.cookie_file, 'rb'))
@@ -53,6 +73,8 @@ def setup(bot):
         else:
             api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server)
 
+#    api = None
+
     if not bot.memory.contains('help'):
         bot.memory['help'] = sopel.tools.SopelMemory()
 
@@ -60,7 +82,6 @@ def setup(bot):
     bot.memory['help']['apollo']['short'] = 'Feature parity with APOLLO'
     bot.memory['help']['apollo']['long'] = {
             helptext('all', '!sandwich', 'Requests a sandwich'),
-            helptext('all', '!sudosandwich', 'Requests a sandwich'),
             helptext('all', '!slap <target>', 'Slaps somebody around'),
             helptext('all', '!apollo stats', 'Prints site stats'),
             helptext('all', '!apollo user <id>', 'Prints user info'),
@@ -70,6 +91,7 @@ def setup(bot):
             helptext('all', '!apollo top10 tags ut|ur|v', 'Searches tag top 10'),
             helptext('all', '!apollo top10 users ul|dl|numul|uls|dls', 'Searches user top 10'),
             helptext('admin', '!sudoslap <count> <target>', 'Slaps somebody around. A bunch'),
+            helptext('admin', '!sudosandwich', 'Requests a sandwich'),
             helptext('admin', '!simulate', 'Engage in an authentic replication of the day to day life of an APOLLO')
             }
     
@@ -111,7 +133,31 @@ def sudosandwich(bot, trigger):
     if 'apollo' in bot.config.core.host:
         return
 
-    bot.say('Here you go, ' + trigger.nick + ' [sandwich]')
+    if trigger.admin:
+        bot.say('Here you go, ' + trigger.nick + ' [sandwich]')
+    else:
+        global sudoer
+        global sudotime
+        global sudocount
+        sudoer = trigger.nick
+        sudotime = datetime.datetime.utcnow()
+        sudocount = 0
+        bot.say("[sudo] password for {0}".format(trigger.nick))
+
+@sopel.module.rule(r'.*')
+def sudo(bot, trigger):
+    global sudoer
+    global sudocount
+    if trigger.nick == sudoer and (datetime.datetime.utcnow() - sudotime).total_seconds() <= 60:
+        if trigger.group(0) == 'hunter2':
+            bot.say("Here you go, {0} [sandwich]".format(trigger.nick))
+        else:
+            sudocount = sudocount + 1
+            if sudocount < 3:
+                bot.say("Sorry, try again.")
+            else:
+                bot.say("sudo: {0} incorrect password attempt".format(str(sudocount)))
+                sudoer = ''
 
 @sopel.module.commands('sudoslap')
 def sudoslap(bot, trigger):
@@ -119,6 +165,7 @@ def sudoslap(bot, trigger):
         return
 
     if not trigger.admin or not trigger.group(3) or not trigger.group(4):
+        bot.say("<workstations> no witty comment? :P")
         return
 
     try:
@@ -140,28 +187,47 @@ def simulate(bot, trigger):
         else:
             call(['sopel', '-c', bot.config.apollo.apollo_config])
 
+status_regex = r'Status - SITE ([a-zA-Z]*) \/ TRACKER ([a-zA-Z]*) \/ ANNOUNCE ([a-zA-Z]*) \/ IRC ([a-zA-Z]*) \/ BOT ([a-z[A-Z]*)'
+
+@sopel.module.interval(60)
+def isup(bot):
+    if bot.config.apollo.check_status:
+        if bot.config.apollo.status_channel in bot.channels:
+            r = requests.get(bot.config.apollo.server)
+            site_status = 'up' if r.status_code == 200 else 'down'
+            r = requests.get(bot.config.apollo.tracker)
+            tracker_status = 'up' if r.status_code == 200 else 'down'
+            bot_status = 'up' if bot.config.apollo.bot.lower() in bot.channels[bot.config.apollo.bot_channel.lower()].users else 'down'
+            announce_status = 'up' if bot_status == 'up' and site_status == 'up' else 'down'
+            chan = bot.channels[bot.config.apollo.status_channel]
+            status = bot.config.apollo.status_format.format(site_status.upper(), tracker_status.upper(), announce_status.upper(), bot_status.upper())
+
+            if status != chan.topic:
+                bot.write(('TOPIC', bot.config.apollo.status_channel, ':{}'.format(status)))
+                bot.say('Changed: {}'.format(status), bot.config.apollo.status_channel) 
+
+
 @sopel.module.commands('apollo')
 def apollo(bot, trigger):
+    command = trigger.group(3)
+    args = trigger.group(2)[len(trigger.group(3)) + 1:]
+
+    if command == 'status':
+        if bot.config.apollo.check_status and bot.config.apollo.status_channel in bot.channels:
+            bot.say(bot.channels[bot.config.apollo.status_channel].topic)
+            return
+    
     if not api:
         return
 
-    command = trigger.group(3)
-    args = trigger.group(2)[len(trigger.group(3)):]
-
     if command == 'user':
-        if trigger.group(4).isdigit():
-            bot.say(user(trigger.group(4)))
+        if not trigger.group(4):
+            bot.say(user(trigger.nick))
         else:
-            json = api.request('usersearch', search=args)
-            if len(json['response']['results']) == 1:
-                bot.say(user(json['response']['results'][0]['userId']))
-                return
-
-            res = u'Results: {}'.format(', '.join([u'{} ({})'.format(s_user['username'], s_user['userId']) for s_user in json['response']['results']]))
-            bot.say(res)
+            bot.say(user(args))
     elif command == 'stats':
         json = api.request('stats')
-        bot.say(u'Users: {}/{} ({} D / {} W / {} M) Torrents: {} Releases: {} Artists: {} Perfects: {} Reqs: {}/{} S/L: {}/{})'.format(
+        bot.say(u'Users: {}/{} ({} D / {} W / {} M) Torrents: {} Releases: {} Artists: {} Perfects: {} Reqs: {}/{} S/L: {}/{}'.format(
             json['response']['enabledUsers'],
             json['response']['maxUsers'],
             json['response']['usersActiveThisDay'],
@@ -220,7 +286,7 @@ def title(bot, trigger, match):
     if not api:
         return
 
-    args = urlparse.parse_qs(urlparse.urlparse(match.group(0)).query)
+    args = dict(urlparse.parse_qsl(urlparse.urlparse(match.group(0)).query))
     if match.group(1) == 'index':
         return 'Apollo - Main Page'
     elif match.group(1) == 'user':
@@ -259,6 +325,14 @@ def title(bot, trigger, match):
         return 'Apollo'
 
 def user(id):
+    if not id.isdigit():
+        json = api.request('usersearch', search=id)
+        if len(json['response']['results']) == 1:
+            id = json['response']['results'][0]['userId']
+        else:
+            return u'Results: {}'.format(', '.join([u'{} ({})'.format(s_user['username'], s_user['userId']) for s_user in json['response']['results']]))
+
+    
     json = api.request('user', id=id)['response']
     return u'{} ({}): {} U {} D ({}) joined {} last seen {}, ranks: UL {} DL {} UP {} Req {} Bounty {} Posts {} Artists {} Overall {}'.format(
             parser.unescape(json['username']),
@@ -280,18 +354,27 @@ def user(id):
 
 def torrent(id):
     json = api.request('torrent', id=id)['response']
-    return u'{} - {} ({}) [{} - {} ({})] [{}] Seeds: {} Leeches: {} Snatches: {}'.format(
-            get_artists(json['group']['musicInfo']),
-            parser.unescape(json['group']['name']),
-            json['group']['year'],
-            json['torrent']['media'],
-            json['torrent']['format'],
-            encoding(json['torrent']),
-            parser.unescape(', '.join(json['group']['tags'][:10])),
-            json['torrent']['seeders'],
-            json['torrent']['leechers'],
-            json['torrent']['snatched']
-            )
+    if json['group']['categoryName'] == 'Music':
+        return u'{} - {} ({}) [{} - {} ({})] [{}] Seeds: {} Leeches: {} Snatches: {}'.format(
+                get_artists(json['group']['musicInfo']),
+                parser.unescape(json['group']['name']),
+                json['group']['year'],
+                json['torrent']['media'],
+                json['torrent']['format'],
+                encoding(json['torrent']),
+                parser.unescape(', '.join(json['group']['tags'][:10])),
+                json['torrent']['seeders'],
+                json['torrent']['leechers'],
+                json['torrent']['snatched']
+                )
+    else:
+        return u'{} [{}] Seeds: {} Leeches: {} Snatches: {}'.format(
+                parser.unescape(json['group']['name']),
+                parser.unescape(', '.join(json['group']['tags'][:10])),
+                json['torrent']['seeders'],
+                json['torrent']['leechers'],
+                json['torrent']['snatched']
+                )
 
 def group(id):
     json = api.request('torrentgroup', id=id)['response']
@@ -307,9 +390,12 @@ def group(id):
 
 def artist(id):
     json = api.request('artist', id=id)['response']
+    tags = ''
+    if json['tags'] and isinstance(json['tags'], (dict)):
+        tags = parser.unescape(u', '.join((x['name'] for x in json['tags'])[:10]))
     return u'{} [{}] - Groups: {} Torrents: {} Seeds: {} Leeches: {} Snatches: {}'.format(
             parser.unescape(json['name']),
-            parser.unescape(u', '.join((x['name'] for x in json['tags'])[:10])),
+            tags,
             json['statistics']['numGroups'],
             json['statistics']['numTorrents'],
             json['statistics']['numSeeders'],
