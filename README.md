@@ -1,29 +1,55 @@
-#Ohboy#
+# Ohboy
 A bunch of scripts. Eventually. Probably.
 
-#Dependencies#
+# Dependencies
 whatapi - https://github.com/isaaczafuta/whatapi - pip install whatapi
 
-##Command reference##
+## Command reference
 https://helifreak.club/bot/
 
 Message the bot with !help for a command list.
 
-##Config##
+## Config
 ```ini
-[apollo]
-username = username
-password = password
-server = https://apollo.rip
-cookie_file = /path/to/file
+[admin]
+hold_ground = true
+auto_accept_invite = false
+
 [badwords]
-badwords = list,of,bad,words,or phrases
+badwords = 
+
 [help]
 gen_html = true
-html_file = /path/to/index.html
+html_file = 
+
+[apollo]
+username = 
+password = 
+server = 
+api = true
+tracker = 
+cookie_file = 
+simulate = true
+apollo_config = sim.cfg
+status_channel = #tiananmen
+check_status = true
+status_format =  Status - SITE {} / TRACKER {}
+bot = apollo
+bot_channel = #tiananmen
+
 [cron]
-user_min_interval = 900
-admin_min_minterval: 60
-user_max_crons = 1
-admin_max_crons = 3
+user_max_crons = 0
+
+[mysql]
+host = 
+user = 
+password = 
+database = 
+
+[duck]
+channel = 
+enabled = 
+min_hosts = 
+min_msg = 
+stat_count = 
 ```
