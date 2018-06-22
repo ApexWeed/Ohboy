@@ -235,6 +235,49 @@ def get_scores(bot, score_type):
             [score_type]).fetchmany(bot.config.duck.stat_count)
     return scores
 
+@sopel.module.commands('ducks')
+def ducks(bot, trigger):
+    if trigger.sender != bot.config.duck.channel:
+        return
+
+    if trigger.group(3):
+        nick = trigger.group(3)
+    else:
+        nick = trigger.nick
+
+    killed = bot.db.get_nick_value(nick, 'killed') or 0
+    befriended = bot.db.get_nick_value(nick, 'befriended') or 0
+
+    if killed + befriended == 0:
+        bot.say("It would regrettably appear that {0} has not participated in the duck hunt."
+                .format(nick))
+    else:
+        bot.say("{0} has killed {1} and befriended {2} in {3}.".format(nick,
+            pluralise("duck", killed), pluralise("duck", befriended), bot.config.duck.channel))
+
+@sopel.module.commands('duckstats')
+def duckstats(bot, trigger):
+    if trigger.sender != bot.config.duck.channel:
+        return
+
+    killed = bot.db.execute(
+            'SELECT SUM(value) '
+            'FROM nick_values '
+            'WHERE key = ? ',
+            ['killed']).fetchone()[0] or 0
+
+    befriended = bot.db.execute(
+            'SELECT SUM(value) '
+            'FROM nick_values '
+            'WHERE key = ? ',
+            ['befriended']).fetchone()[0] or 0
+
+    if killed + befriended == 0:
+        bot.say("It looks like there has been no duck activity.")
+    else:
+        bot.say("Duck Stats: {} killed and {} befriended in {}".format(
+            killed, befriended, bot.config.duck.channel))
+
 def pluralise(word, count):
     if count == 1:
         return "{0} {1}".format(str(count), word)
