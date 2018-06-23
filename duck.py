@@ -2,7 +2,9 @@
 import sopel.modules
 import random
 from time import time
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+
+helptext = namedtuple('HelpText', 'perms command line')
 
 duck_tail = u'・゜゜・。。・゜゜'
 duck = [u'\_o< ', u'\_O< ', u'\_0< ', u'\_\u00f6< ', u'\_\u00f8< ', u'\_\u00f3< ']
@@ -33,6 +35,25 @@ def configure(config):
 def setup(bot):
     bot.config.define_section('duck', DuckSection)
     set_next()
+
+    if not bot.memory.contains('help'):
+        bot.memory['help'] = sopel.tools.SopelMemory()
+
+    bot.memory['help']['duck'] = sopel.tools.SopelMemory()
+    bot.memory['help']['duck']['short'] = "Duck hunting"
+    bot.memory['help']['duck']['long'] = {
+            helptext('admin', '!duck', 'Spawns a duck'),
+            helptext('admin', '!chicken', 'Spawns a chicken'),
+            helptext('all', '!bef', 'Befriends a duck'),
+            helptext('all', '!befriend', 'Befriends a duck'),
+            helptext('all', '!bang', 'Shoots a duck'),
+            helptext('all', '!friends', 'Lists stats for good guys'),
+            helptext('all', '!killers', 'Lists stats for bad guys'),
+            helptext('all', '!badguys', 'Lists stats for bad guys'),
+            helptext('all', '!ducks', 'Lists personal duck stats'),
+            helptext('all', '!ducks <nick>', 'Lists someone elses personal duck stats'),
+            helptext('all', '!duckstats', 'Lists channel duck stats')
+            }
 
 def generate_duck():
     '''Try and randomize the duck message so people can't highlight on it/script against it.'''
