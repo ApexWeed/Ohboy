@@ -75,16 +75,18 @@ def makeduck(bot, trigger):
 
     global duck_status
     global duck_time
+
     if trigger.group(3):
-        bot.say(generate_duck(), trigger.group(3))
-        if trigger.group(3) == bot.config.duck.channel:
-            duck_time = time()
-            duck_status = 1
+        target = trigger.group(3)
     else:
-        bot.say(generate_duck())
-        if trigger.sender == bot.config.duck.channel:
-            duck_time = time()
-            duck_status = 1
+        target = trigger.sender
+
+    if target == bot.config.duck.channel:
+        duck = generate_duck()[::-1]
+    else:
+        duck = generate_duck()
+
+    bot.say(duck, target)
 
 def generate_chicken():
     '''Try and randomize the chicken message so people can't highlight on it/script against it.'''
@@ -106,16 +108,18 @@ def makechicken(bot, trigger):
 
     global duck_status
     global duck_time
+
     if trigger.group(3):
-        bot.say(generate_chicken(), trigger.group(3))
-        if trigger.group(3) == bot.config.duck.channel:
-            duck_status = 2
-            duck_time = time()
+        target = trigger.group(3)
     else:
-        bot.say(generate_chicken())
-        if trigger.sender == bot.config.duck.channel:
-            duck_status = 2
-            duck_time = time()
+        target = trigger.sender
+
+    if target == bot.config.duck.channel:
+        duck = generate_chicken()[::-1]
+    else:
+        duck = generate_chicken()
+
+    bot.say(duck, target)
 
 def make_bird(bot, real, breed):
     global duck_status
@@ -164,7 +168,7 @@ def befriend(bot, trigger):
 
     attack(bot, trigger.nick, False)
 
-@sopel.module.commands('bang')
+@sopel.module.commands('bang', 'banfg', 'banmg', 'HAMBURGER')
 def bang(bot, trigger):
     if trigger.sender != bot.config.duck.channel:
         return
@@ -199,13 +203,14 @@ def attack(bot, nick, bad):
     if duck_status == 2:
         bot.say(chicken, bot.config.duck.channel)
         duck_status = 0
+        set_next()
         return
 
     shot = time()
 
     if nick in cooldown and cooldown[nick] > shot:
-        bot.notice("You are in a cooldown period, you can try again in {0.3f} seconds.".format(
-            str(cooldown[nick] - shot)))
+        bot.notice("You are in a cooldown period, you can try again in {0:.3f} seconds.".format(
+            cooldown[nick] - shot), nick)
         return
 
     chance = hit_or_miss(duck_time, shot)
@@ -215,8 +220,6 @@ def attack(bot, nick, bad):
         cooldown[nick] = shot + 7
         bot.say(out, bot.config.duck.channel)
         return
-
-    duck_status = 0
 
     if bad:
         score = bot.db.get_nick_value(nick, "killed") or 0
@@ -230,21 +233,24 @@ def attack(bot, nick, bad):
     bot.say(msg.format(nick, shot - duck_time, pluralise(bird, score + 1), bot.config.duck.channel))
     set_next()
 
-@sopel.module.commands('friends')
+    duck_status = 0
+
+@sopel.module.commands('friends', 'goodguys', 'duckerfrienders')
 def friends(bot, trigger):
     if trigger.sender == bot.config.duck.channel:
-        scores = get_scores(bot, 'befriended')
-        out = 'Good guys in {0}: '.format(bot.config.duck.channel)
-        out += ' • '.join(["{0}: {1:,}".format(s[0], s[1]) for s in scores])
-        bot.say(out)
+        print_scores(bot, 'befriended', "Good Guys")
 
 @sopel.module.commands('killers', 'badguys')
 def killers(bot, trigger):
     if trigger.sender == bot.config.duck.channel:
-        scores = get_scores(bot, 'killed')
-        out = 'Bad guys in {0}: '.format(bot.config.duck.channel)
-        out += ' • '.join(["{0}: {1:,}".format(s[0], s[1]) for s in scores])
-        bot.say(out)
+        print_scores(bot, 'killed', "Bad Guys")
+
+def print_scores(bot, score_type, message):
+    scores = get_scores(bot, score_type)
+    out = '{0} in {1}: '.format(message, bot.config.duck.channel)
+    out += ' • '.join(["{0}: {1:,}".format(s[0], s[1]) for s in scores])
+    bot.say(out)
+
 
 def get_scores(bot, score_type):
     scores = bot.db.execute(

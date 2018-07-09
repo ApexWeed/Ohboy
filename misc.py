@@ -1,3 +1,5 @@
+from datetime import datetime
+from dateutil import tz
 import sopel.modules
 import random
 
@@ -80,3 +82,7 @@ def nick(bot, trigger):
 @sopel.module.commands('gender')
 def gender(bot, trigger):
     bot.say('Smasher')
+
+@sopel.module.commands('bong')
+def bong(bot, trigger):
+    bot.say("OY IT'S {0} BONG".format(datetime.now(tz=tz.gettz('Europe/London')).hour % 12))

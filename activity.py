@@ -38,7 +38,8 @@ def stats(bot, trigger):
             wpl = wc / lc
         else:
             wpl = 0
-        bot.say('Stats for ' + trigger.group(3) + ': words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wpl))
+        bot.say('Stats for {0}: words: {1}, lines: {2} words per line: {3}'.format(
+            trigger.group(3), wc, lc, wpl))
     else:
         wc = bot.db.execute(
                 'SELECT SUM(value) FROM nick_values '
@@ -53,4 +54,27 @@ def stats(bot, trigger):
         else:
             wpl = 0
     
-        bot.say('Global stats: words: ' + str(wc) + ', lines: ' + str(lc) + ' words per line: ' + str(wpl))
+        bot.say('Global stats: words: {0}, lines: {1} words per line: {2}'.format(wc, lc, wpl))
+
+@sopel.module.commands('top10')
+def top10(bot, trigger):
+    scores = bot.db.execute(
+            'SELECT n.canonical, w.value, l.value '
+            'FROM nicknames n '
+            'INNER JOIN '
+            '( '
+            '   SELECT nick_id, value '
+            '   FROM nick_values '
+            '   WHERE key = ? '
+            ')  w ON w.nick_id = n.nick_id '
+            'INNER JOIN '
+            '( '
+            '   SELECT nick_id, value '
+            '   FROM nick_values '
+            '   WHERE key = ? '
+            ') l ON l.nick_id = n.nick_id '
+            'ORDER BY w.value DESC ',
+            ['wc', 'lc']).fetchmany(10)
+
+    bot.say('Top 10 stats: {0}'.format(' : '.join('{0} - {1} words, {2} lines'.format(x[0], x[1], x[2]) for
+        x in scores)))
