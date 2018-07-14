@@ -327,7 +327,9 @@ def pluralise(word, count):
 def hit_or_miss(deploy, shot):
     if shot - deploy < 1:
         return 0.05
-    elif 1 <= shot - deploy <= 7:
+    elif 1 <= shot - deploy < 3:
+        return random.uniform(0.4, 0.6)
+    elif 3 <= shot - deploy <= 7:
         return random.uniform(0.6, 0.75)
     else:
         return 1
