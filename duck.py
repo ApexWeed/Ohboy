@@ -161,14 +161,14 @@ def do_duck(bot):
                     bot.say(generate_chicken(), bot.config.duck.channel)
                     duck_status = 2
 
-@sopel.module.commands('bef', 'befriend')
+@sopel.module.commands('bef', 'befriend', u'иуа')
 def befriend(bot, trigger):
     if trigger.sender != bot.config.duck.channel:
         return
 
     attack(bot, trigger.nick, False)
 
-@sopel.module.commands('bang', 'banfg', 'banmg', 'HAMBURGER')
+@sopel.module.commands('bang', 'banfg', 'banmg', 'HAMBURGER', u'ифтп')
 def bang(bot, trigger):
     if trigger.sender != bot.config.duck.channel:
         return
@@ -182,7 +182,7 @@ def attack(bot, nick, bad):
     if bad:
         miss = [
                 "Duck slaps {0}".format(nick), "Your gun jammed!",
-                "Even if the duck was a barn door you still would've missed"
+                "Even if the duck was a barn door you still would've missed."
                 ]
         no_duck = "There is no duck. What are you shooting at?"
         msg = "{0} you shot a duck in {1:.3f} seconds! You have killed {2} in {3}."
@@ -190,7 +190,7 @@ def attack(bot, nick, bad):
     else:
         miss = [
                 "Who knew ducks could be so picky?",
-                "The duck didn't want to be friends, maybe next time"
+                "The duck didn't want to be friends, maybe next time."
                 ]
         no_duck = "You tried befriending a non-existent duck. That's fucking creepy."
         msg = "{0} you befriended a duck in {1:.3f} seconds! You have made friends with {2} in {3}."
@@ -247,8 +247,8 @@ def killers(bot, trigger):
 
 def print_scores(bot, score_type, message):
     scores = get_scores(bot, score_type)
-    out = '{0} in {1}: '.format(message, bot.config.duck.channel)
-    out += ' • '.join(["{0}: {1:,}".format(s[0], s[1]) for s in scores])
+    out = u"{0} in {1}: ".format(message, bot.config.duck.channel)
+    out += u" • ".join([u"{0}: {1:,}".format(mangle(s[0]), s[1]) for s in scores])
     bot.say(out)
 
 
@@ -261,6 +261,9 @@ def get_scores(bot, score_type):
             'ORDER BY v.value DESC ',
             [score_type]).fetchmany(bot.config.duck.stat_count)
     return scores
+
+def mangle(nick):
+    return u"{0}{1}{2}".format(nick[:1], unichr(int('200B', 16)), nick[1:])
 
 @sopel.module.commands('ducks')
 def ducks(bot, trigger):
@@ -279,7 +282,7 @@ def ducks(bot, trigger):
         bot.say("It would regrettably appear that {0} has not participated in the duck hunt."
                 .format(nick))
     else:
-        bot.say("{0} has killed {1} and befriended {2} in {3}.".format(nick,
+        bot.say(u"{0} has killed {1} and befriended {2} in {3}.".format(mangle(nick),
             pluralise("duck", killed), pluralise("duck", befriended), bot.config.duck.channel))
 
 @sopel.module.commands('duckstats')
@@ -304,6 +307,16 @@ def duckstats(bot, trigger):
     else:
         bot.say("Duck Stats: {} killed and {} befriended in {}".format(
             killed, befriended, bot.config.duck.channel))
+
+@sopel.module.commands('duckban')
+def duckban(bot, trigger):
+    if trigger.owner and trigger.group(3) and trigger.sender == bot.config.duck.channel:
+        bot.say("{0} banned from duck hunt".format(trigger.group(3)))
+
+@sopel.module.commands('duckforgive')
+def duckforgive(bot, trigger):
+    if trigger.owner and trigger.group(3) and trigger.sender == bot.config.duck.channel:
+        bot.say("Not implemented")
 
 def pluralise(word, count):
     if count == 1:
