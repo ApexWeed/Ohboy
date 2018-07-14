@@ -181,7 +181,7 @@ def attack(bot, nick, bad):
     global messages
     if bad:
         miss = [
-                "Duck slaps {0}".format(nick), "Your gun jammed!",
+                "Duck slaps {0}.".format(nick), "Your gun jammed!",
                 "Even if the duck was a barn door you still would've missed."
                 ]
         no_duck = "There is no duck. What are you shooting at?"
