@@ -10,6 +10,8 @@ duck_tail = u'・゜゜・。。・゜゜'
 duck = [u'\_o< ', u'\_O< ', u'\_0< ', u'\_\u00f6< ', u'\_\u00f8< ', u'\_\u00f3< ']
 duck_noise = ['QUACK!', 'FLAP FLAP!', 'quack!']
 chicken_noise = ['BOK!', 'SCRATCH SCRATCH!', 'bok!']
+turkey_noise = ['GOBBLE!', 'HERP DERP!', 'gobble!']
+o_noise = ['PAY BILLS', 'GHOSTING SYSOP', 'THE KEYS WILL BE SHARED !!!', '100 HOURSRS AND COUNTING !!!', 'NO ETA !!!', 'DEJA VU !!!', 'I\'M SO BUSY !!!', 'AIN\'T GOT NO TIME !!!']
 duck_status = 0;
 hosts = []
 messages = 0
@@ -121,6 +123,30 @@ def makechicken(bot, trigger):
 
     bot.say(duck, target)
 
+def generate_turkey():
+    '''Try and randomize the turkey message so people can't highlight on it/script against it.'''
+    rt = random.randint(1, len(duck_tail) - 1)
+    dtail = duck_tail[:rt] + u' \u200b ' + duck_tail[rt:]
+    dbody = random.choice(duck)
+    rb = random.randint(1, len(dbody) - 1)
+    dbody = dbody[:rb] + u'\u200b' + dbody[rb:]
+    cnoise = random.choice(turkey_noise)
+    rn = random.randint(1, len(cnoise) - 1)
+    cnoise = cnoise[:rn] + u'\u200b' + cnoise[rn:]
+    return u''.join((dtail, dbody, cnoise))
+
+def generate_o():
+    '''Try and randomize the O message so people can't highlight on it/script against it.'''
+    rt = random.randint(1, len(duck_tail) - 1)
+    dtail = duck_tail[:rt] + u' \u200b ' + duck_tail[rt:]
+    dbody = random.choice(duck)
+    rb = random.randint(1, len(dbody) - 1)
+    dbody = dbody[:rb] + u'\u200b' + dbody[rb:]
+    cnoise = random.choice(o_noise)
+    rn = random.randint(1, len(cnoise) - 1)
+    cnoise = cnoise[:rn] + u'\u200b' + cnoise[rn:]
+    return u''.join((dtail, dbody, cnoise))
+
 def make_bird(bot, real, breed):
     global duck_status
 
@@ -130,6 +156,12 @@ def make_bird(bot, real, breed):
     elif breed == 'chicken':
         message = generate_chicken()
         mode = 2
+    elif breed == 'turkey':
+        message = generate_turkey()
+        mode = 3
+    elif breed == 'o':
+        message = generate_o()
+        mode = 4
     else:
         return
 
@@ -151,15 +183,23 @@ def do_duck(bot):
     global duck_status
     global duck_time
     if bot.config.duck.channel in bot.channels:
+        bot.say("Status: {0}, Time: {1}, Messages: {2}, Hosts: {3}".format(duck_status,
+            next_duck - time(), messages, len(hosts)), "#asdf");
         if (duck_status == 0 and next_duck <= time() and messages > bot.config.duck.min_msg and
             len(hosts) > bot.config.duck.min_hosts):
                 duck_time = time()
-                if random.randint(1, 100) > 5:
+                if random.randint(1, 100) > 10:
                     bot.say(generate_duck(), bot.config.duck.channel)
                     duck_status = 1
-                else:
+                elif random.randint(1, 100) > 40:
                     bot.say(generate_chicken(), bot.config.duck.channel)
                     duck_status = 2
+                elif random.randint(1, 100) > 20:
+                    bot.say(generate_turkey(), bot.config.duck.channel)
+                    duck_status = 3
+                else:
+                    bot.say(generate_o(), bot.config.duck.channel)
+                    duck_status = 4
 
 @sopel.module.commands('bef', 'befriend', u'иуа')
 def befriend(bot, trigger):
@@ -187,6 +227,8 @@ def attack(bot, nick, bad):
         no_duck = "There is no duck. What are you shooting at?"
         msg = "{0} you shot a duck in {1:.3f} seconds! You have killed {2} in {3}."
         chicken = "That's a chicken. This is a duck hunt."
+        turkey = "That's a turkey. This is a fuck hunt."
+        o = "That's a Duck-O, you don't want that."
     else:
         miss = [
                 "Who knew ducks could be so picky?",
@@ -195,6 +237,8 @@ def attack(bot, nick, bad):
         no_duck = "You tried befriending a non-existent duck. That's fucking creepy."
         msg = "{0} you befriended a duck in {1:.3f} seconds! You have made friends with {2} in {3}."
         chicken = "That's a chicken."
+        turkey = "That's turkey."
+        o = "That's a Duck-O, nice work!"
 
     if duck_status == 0:
         bot.say(no_duck, bot.config.duck.channel)
@@ -206,9 +250,16 @@ def attack(bot, nick, bad):
         set_next()
         return
 
+    if duck_status == 3:
+        bot.say(turkey, bot.config.duck.channel)
+        duck_status = 0
+        set_next()
+        return
+
     shot = time()
 
     if nick in cooldown and cooldown[nick] > shot:
+        cooldown[nick] = cooldown[nick] + 3
         bot.notice("You are in a cooldown period, you can try again in {0:.3f} seconds.".format(
             cooldown[nick] - shot), nick)
         return
@@ -223,14 +274,16 @@ def attack(bot, nick, bad):
 
     if bad:
         score = bot.db.get_nick_value(nick, "killed") or 0
-        bot.db.set_nick_value(nick, "killed", score + 1)
+        diff = 2 if duck_status == 4 else 1
+        bot.db.set_nick_value(nick, "killed", score + diff)
         bird = "duck"
     else:
         score = bot.db.get_nick_value(nick, "befriended") or 0
-        bot.db.set_nick_value(nick, "befriended", score + 1)
+        diff = -1 if duck_status == 4 else 1
+        bot.db.set_nick_value(nick, "befriended", score + diff)
         bird = "duck"
 
-    bot.say(msg.format(nick, shot - duck_time, pluralise(bird, score + 1), bot.config.duck.channel))
+    bot.say(msg.format(nick, shot - duck_time, pluralise(bird, score + diff), bot.config.duck.channel))
     set_next()
 
     duck_status = 0

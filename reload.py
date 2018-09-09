@@ -18,9 +18,9 @@ def setup(bot):
     bot.memory['help']['reload'] = sopel.tools.SopelMemory()
     bot.memory['help']['reload']['short'] = 'Reloads modules at runtime'
     bot.memory['help']['reload']['long'] = {
-            helptext('admin', '!reload [module]', 'Reloads either specified module or all'),
-            helptext('admin', '!reload-config', 'Reloads the whole Sopel config, and reloads modules'),
-            helptext('admin', '!load <module>', 'Loads a module')
+            helptext('owner', '!reload [module]', 'Reloads either specified module or all'),
+            helptext('owner', '!reload-config', 'Reloads the whole Sopel config, and reloads modules'),
+            helptext('owner', '!load <module>', 'Loads a module')
             }
 
 @sopel.module.commands('reload-config')
@@ -28,7 +28,7 @@ def setup(bot):
 @sopel.module.thread(False)
 def conf_reload(bot, trigger):
     """Reloads configs"""
-    if not trigger.admin:
+    if not trigger.owner:
         return
     bot.config.__init__(bot.config.filename)
     bot.notice('Configs reloaded', trigger.nick)

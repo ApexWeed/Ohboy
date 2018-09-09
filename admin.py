@@ -307,3 +307,15 @@ def rules(bot, trigger):
 
     for line in bot._callables['medium'].keys()[0].pattern.split('\n'):
         bot.say(line)
+
+@sopel.module.commands('v', 'voice')
+def voice(bot, trigger):
+    if trigger.is_privmsg:
+        return
+
+    chan = trigger.sender
+
+    if bot.privileges[chan][trigger.nick] >= sopel.module.HALFOP:
+        for nick in bot.channels[chan].users:
+            if bot.privileges[chan][nick] < sopel.module.VOICE:
+                bot.write(('MODE', trigger.sender, '+v', nick))

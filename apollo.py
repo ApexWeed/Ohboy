@@ -62,17 +62,18 @@ def setup(bot):
     bot.config.define_section('apollo', ApolloSection)
 #    api = 'wow'
 
-    if bot.config.apollo.api == False or not api:
-        if os.path.isfile(bot.config.apollo.cookie_file):
-            try:
-                cookies = pickle.load(open(bot.config.apollo.cookie_file, 'rb'))
-                api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server, cookies=cookies)
-            except:
+    try:
+        if bot.config.apollo.api == False or not api:
+            if os.path.isfile(bot.config.apollo.cookie_file):
+                try:
+                    cookies = pickle.load(open(bot.config.apollo.cookie_file, 'rb'))
+                    api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server, cookies=cookies)
+                except:
+                        api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server)
+            else:
                 api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server)
-
-        else:
-            api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server)
-
+    except:
+        api = None
 #    api = None
 
     if not bot.memory.contains('help'):
@@ -206,6 +207,12 @@ def isup(bot):
                 bot.write(('TOPIC', bot.config.apollo.status_channel, ':{}'.format(status)))
                 bot.say('Changed: {}'.format(status), bot.config.apollo.status_channel) 
 
+@sopel.module.commands('u')
+def u(bot, trigger):
+    if not trigger.group(3):
+        bot.say(user(trigger.nick))
+    else:
+        bot.say(user(trigger.group(3)))
 
 @sopel.module.commands('apollo')
 def apollo(bot, trigger):
@@ -380,7 +387,7 @@ def group(id):
     json = api.request('torrentgroup', id=id)['response']
     return u'{} - {} ({}) [{}] Seeds: {} Leeches: {} Snatches: {}'.format(
             get_artists(json['group']['musicInfo']),
-            json['group']['name'],
+            parser.unescape(json['group']['name']),
             json['group']['year'],
             parser.unescape(', '.join(json['group']['tags'][:10])),
             sum(x['seeders'] for x in json['torrents']),

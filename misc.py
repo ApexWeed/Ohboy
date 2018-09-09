@@ -86,3 +86,15 @@ def gender(bot, trigger):
 @sopel.module.commands('bong')
 def bong(bot, trigger):
     bot.say("OY IT'S {0} BONG".format(datetime.now(tz=tz.gettz('Europe/London')).hour % 12))
+
+@sopel.module.rule(r'hi ohboy')
+def hi(bot, trigger):
+    bot.say("hi {0}".format(trigger.nick))
+
+@sopel.module.rule(r'send help')
+def help(bot, trigger):
+    bot.say("help")
+
+@sopel.module.rule(r'hi$')
+def hi(bot, trigger):
+    bot.say("hi {0}".format(trigger.nick));

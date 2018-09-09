@@ -9,7 +9,8 @@ from sopel import web, tools, __version__
 helptext = collections.namedtuple('HelpText', 'perms command line')
 
 USER_AGENT = 'Sopel/{} (http://sopel.chat)'.format(__version__)
-default_headers = {'User-Agent': USER_AGENT}
+default_headers = {'User-Agent': USER_AGENT,
+        'Accept-Language': 'en-US,en *;q=0.5'}
 
 url_finder = None
 # These are used to clean up the title tag before actually parsing it. Not the
