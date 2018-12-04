@@ -14,7 +14,7 @@ helptext = collections.namedtuple('HelpText', 'perms command line')
 
 api = None
 parser = HTMLParser.HTMLParser()
-regex = re.compile(r"(?u)https://apollo\.rip/(.*?)\.php\??([-a-zA-Z0-9@:%_\+.~#?&//=]*)")
+regex = re.compile(r"(?u)https://(?:[^\.]+\.)?orpheus.network/(.*?)\.php\??([-a-zA-Z0-9@:%_\+.~#?&//=]*)")
 sudoer = ''
 sudotime = datetime.datetime.utcnow()
 sudocount = 0
@@ -60,10 +60,9 @@ def configure(config):
 def setup(bot):
     global api
     bot.config.define_section('apollo', ApolloSection)
-#    api = 'wow'
 
     try:
-        if bot.config.apollo.api == False or not api:
+        if bot.config.apollo.api == True and api == None:
             if os.path.isfile(bot.config.apollo.cookie_file):
                 try:
                     cookies = pickle.load(open(bot.config.apollo.cookie_file, 'rb'))
@@ -74,7 +73,6 @@ def setup(bot):
                 api = whatapi.WhatAPI(username=bot.config.apollo.username, password=bot.config.apollo.password, server=bot.config.apollo.server)
     except:
         api = None
-#    api = None
 
     if not bot.memory.contains('help'):
         bot.memory['help'] = sopel.tools.SopelMemory()
@@ -195,11 +193,13 @@ def isup(bot):
     if bot.config.apollo.check_status:
         if bot.config.apollo.status_channel in bot.channels:
             r = requests.get(bot.config.apollo.server)
-            site_status = 'up' if r.status_code == 200 else 'down'
+            #site_status = 'up' if r.status_code == 200 else 'down'
+            site_status = str(r.status_code)
             r = requests.get(bot.config.apollo.tracker)
-            tracker_status = 'up' if r.status_code == 200 else 'down'
-            bot_status = 'up' if bot.config.apollo.bot.lower() in bot.channels[bot.config.apollo.bot_channel.lower()].users else 'down'
-            announce_status = 'up' if bot_status == 'up' and site_status == 'up' else 'down'
+            #tracker_status = 'up' if r.status_code == 200 else 'down'
+            tracker_status = str(r.status_code)
+            bot_status = '200' if bot.config.apollo.bot.lower() in bot.channels[bot.config.apollo.bot_channel.lower()].users else '400'
+            announce_status = '200' if bot_status == '200' and site_status == '200' else '400'
             chan = bot.channels[bot.config.apollo.status_channel]
             status = bot.config.apollo.status_format.format(site_status.upper(), tracker_status.upper(), announce_status.upper(), bot_status.upper())
 
@@ -209,6 +209,9 @@ def isup(bot):
 
 @sopel.module.commands('u')
 def u(bot, trigger):
+    if not api:
+        return
+
     if not trigger.group(3):
         bot.say(user(trigger.nick))
     else:

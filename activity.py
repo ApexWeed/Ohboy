@@ -35,10 +35,10 @@ def stats(bot, trigger):
         wc = bot.db.get_nick_value(trigger.group(3), 'wc') or 0
         lc = bot.db.get_nick_value(trigger.group(3), 'lc') or 0
         if lc > 0:
-            wpl = wc / lc
+            wpl = float(wc) / lc
         else:
             wpl = 0
-        bot.say('Stats for {0}: words: {1}, lines: {2} words per line: {3}'.format(
+        bot.say('Stats for {0}: words: {1}, lines: {2} words per line: {3:.3f}'.format(
             trigger.group(3), wc, lc, wpl))
     else:
         wc = bot.db.execute(
@@ -50,11 +50,11 @@ def stats(bot, trigger):
                 'WHERE `key` = ?',
                 ['lc']).fetchone()[0]
         if lc > 0:
-            wpl = wc / lc
+            wpl = float(wc) / lc
         else:
             wpl = 0
     
-        bot.say('Global stats: words: {0}, lines: {1} words per line: {2}'.format(wc, lc, wpl))
+        bot.say('Global stats: words: {0}, lines: {1} words per line: {2:.3f}'.format(wc, lc, wpl))
 
 @sopel.module.commands('top10')
 def top10(bot, trigger):
@@ -76,5 +76,20 @@ def top10(bot, trigger):
             'ORDER BY w.value DESC ',
             ['wc', 'lc']).fetchmany(10)
 
-    bot.say('Top 10 stats: {0}'.format(' : '.join('{0} - {1} words, {2} lines'.format(x[0], x[1], x[2]) for
+    bot.say(u'Top 10 stats: {0}'.format(u' : '.join(u'{0} - {1} w, {2} l, {3:.3f} wpl'.format(
+        mangle(x[0]), x[1], x[2], 0 if x[2] == 0 else float(x[1]) / x[2]) for
         x in scores)))
+
+def merge(bot, nick, alt):
+    wco = bot.db.get_nick_value(nick, 'wc') or 0
+    wcn = bot.db.get_nick_value(alt, 'wc') or 0
+    lco = bot.db.get_nick_value(nick, 'lc') or 0
+    lcn = bot.db.get_nick_value(alt, 'lc') or 0
+
+    bot.db.set_nick_value(nick, 'wc', wco + wcn)
+    bot.db.set_nick_value(nick, 'lc', lco + lcn)
+    return "{0} words, {1} lines".format(wcn, lcn)
+
+def mangle(nick):
+    return u"{0}{1}{2}".format(nick[:1], unichr(int('200B', 16)), nick[1:])
+

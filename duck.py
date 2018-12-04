@@ -228,7 +228,7 @@ def attack(bot, nick, bad):
         msg = "{0} you shot a duck in {1:.3f} seconds! You have killed {2} in {3}."
         chicken = "That's a chicken. This is a duck hunt."
         turkey = "That's a turkey. This is a fuck hunt."
-        o = "That's a Duck-O, you don't want that."
+        o = "That's a Duck-O, nice work {0}! You have killed {2} in {3}."
     else:
         miss = [
                 "Who knew ducks could be so picky?",
@@ -238,7 +238,7 @@ def attack(bot, nick, bad):
         msg = "{0} you befriended a duck in {1:.3f} seconds! You have made friends with {2} in {3}."
         chicken = "That's a chicken."
         turkey = "That's turkey."
-        o = "That's a Duck-O, nice work!"
+        o = "That's a Duck-O {0}, you don't want that. A duck leaves you in disgust. You have made friends with {2} in {3}."
 
     if duck_status == 0:
         bot.say(no_duck, bot.config.duck.channel)
@@ -283,7 +283,10 @@ def attack(bot, nick, bad):
         bot.db.set_nick_value(nick, "befriended", score + diff)
         bird = "duck"
 
-    bot.say(msg.format(nick, shot - duck_time, pluralise(bird, score + diff), bot.config.duck.channel))
+    if duck_status == 4:
+        bot.say(o.format(nick, shot - duck_time, pluralise(bird, score + diff), bot.config.duck.channel))
+    else:
+        bot.say(msg.format(nick, shot - duck_time, pluralise(bird, score + diff), bot.config.duck.channel))
     set_next()
 
     duck_status = 0
@@ -293,7 +296,7 @@ def friends(bot, trigger):
     if trigger.sender == bot.config.duck.channel:
         print_scores(bot, 'befriended', "Good Guys")
 
-@sopel.module.commands('killers', 'badguys')
+@sopel.module.commands('killers', 'badguys', 'duckerfuckers')
 def killers(bot, trigger):
     if trigger.sender == bot.config.duck.channel:
         print_scores(bot, 'killed', "Bad Guys")
@@ -304,13 +307,13 @@ def print_scores(bot, score_type, message):
     out += u" • ".join([u"{0}: {1:,}".format(mangle(s[0]), s[1]) for s in scores])
     bot.say(out)
 
-
 def get_scores(bot, score_type):
     scores = bot.db.execute(
-            'SELECT n.canonical, v.value '
+            'SELECT MAX(n.canonical), MAX(v.value) '
             'FROM nick_values v '
             'JOIN nicknames n ON n.nick_id = v.nick_id '
             'WHERE v.key = ? '
+            'GROUP BY v.nick_id '
             'ORDER BY v.value DESC ',
             [score_type]).fetchmany(bot.config.duck.stat_count)
     return scores
@@ -396,3 +399,14 @@ def tally(bot, trigger):
     if not trigger.host in hosts:
         hosts.append(trigger.host)
     messages = messages + 1
+
+def merge(bot, nick, alt):
+    befo = bot.db.get_nick_value(nick, 'befriended') or 0
+    befn = bot.db.get_nick_value(alt, 'befriended') or 0
+    killo = bot.db.get_nick_value(nick, 'killed') or 0
+    killn = bot.db.get_nick_value(alt, 'killed') or 0
+
+    bot.db.set_nick_value(nick, 'befriended', befo + befn)
+    bot.db.set_nick_value(nick, 'killed', killo + killn)
+    return "{0} killed, {1} befriended".format(befn, killn)
+

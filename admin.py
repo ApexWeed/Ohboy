@@ -27,6 +27,7 @@ def setup(bot):
     bot.memory['help']['admin']['short'] = 'Admin tools'
     bot.memory['help']['admin']['long'] = {
             helptext('all', '!admin list', 'Lists admins'),
+            helptext('all', '!v', 'Voices people (halfop+)'),
             helptext('admin', '!op <channel> [nick]', 'Makes you, or nick op'),
             helptext('admin', '!deop <channel> [nick]', 'Makes you, or nick not op'),
             helptext('admin', '!mode <channel> <mode> [nick]', 'Sets you, or nick to the specified mode'),
@@ -43,7 +44,8 @@ def setup(bot):
             helptext('owner', '!save', 'Saves bot config'),
             helptext('owner', '!admin add <nick>', 'Adds a nick as an admin'),
             helptext('owner', '!admin del <nick>', 'Removes a nick from admin'),
-            helptext('owner', '!pyver', 'Prints python version')
+            helptext('owner', '!pyver', 'Prints python version'),
+            helptext('owner', '!merge <nick> <alt>', 'Merges two nicks together')
             }
 
 @sopel.module.event('KICK')
@@ -319,3 +321,25 @@ def voice(bot, trigger):
         for nick in bot.channels[chan].users:
             if bot.privileges[chan][nick] < sopel.module.VOICE:
                 bot.write(('MODE', trigger.sender, '+v', nick))
+
+@sopel.module.commands('merge')
+def merge(bot, trigger):
+    if not trigger.owner:
+        return
+
+    if trigger.group(3) and trigger.group(4):
+        nick = trigger.group(3)
+        alt = trigger.group(4)
+
+        modules = []
+        for module in bot.config.core.enable:
+            try:
+                module = sys.modules[module]
+                if hasattr(module, 'merge'):
+                    modules.append("{0}: ({1})".format(module.__name__, module.merge(bot, nick, alt)))
+            except:
+                pass
+        
+        bot.db.merge_nick_groups(nick, alt)
+        bot.say("Merged {0} into {1}, modules: {2}".format(alt, nick, ", ".join(modules)))
+

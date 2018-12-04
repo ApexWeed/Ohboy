@@ -39,7 +39,7 @@ def conf_reload(bot, trigger):
 @sopel.module.thread(False)
 def reload(bot, trigger):
     """Reloads a module, for use by admins only."""
-    if not trigger.admin or not trigger.is_privmsg:
+    if not trigger.owner or not trigger.is_privmsg:
         return
 
     name = trigger.group(2)
@@ -108,7 +108,7 @@ def load_module(bot, name, path, type_, nick):
 @sopel.module.thread(False)
 def load(bot, trigger):
     """Loads a module, for use by admins only."""
-    if not trigger.admin or not trigger.is_privmsg:
+    if not trigger.owner or not trigger.is_privmsg:
         return
 
     name = trigger.group(2)
