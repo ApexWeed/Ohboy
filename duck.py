@@ -183,8 +183,9 @@ def do_duck(bot):
     global duck_status
     global duck_time
     if bot.config.duck.channel in bot.channels:
-        bot.say("Status: {0}, Time: {1}, Messages: {2}, Hosts: {3}".format(duck_status,
-            next_duck - time(), messages, len(hosts)), "#asdf");
+        if '#asdf' in bot.channels:
+            bot.say("Status: {0}, Time: {1}, Messages: {2}, Hosts: {3}".format(duck_status,
+                next_duck - time(), messages, len(hosts)), "#asdf");
         if (duck_status == 0 and next_duck <= time() and messages > bot.config.duck.min_msg and
             len(hosts) > bot.config.duck.min_hosts):
                 duck_time = time()
@@ -224,7 +225,7 @@ def attack(bot, nick, bad):
                 "Duck slaps {0}.".format(nick), "Your gun jammed!",
                 "Even if the duck was a barn door you still would've missed."
                 ]
-        no_duck = "There is no duck. What are you shooting at?"
+        no_duck = "There is no duck. What are you imzadi?"
         msg = "{0} you shot a duck in {1:.3f} seconds! You have killed {2} in {3}."
         chicken = "That's a chicken. This is a duck hunt."
         turkey = "That's a turkey. This is a fuck hunt."

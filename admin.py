@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 """
 admin.py - Sopel admin module that actually works
 """
@@ -47,6 +47,9 @@ def setup(bot):
             helptext('owner', '!pyver', 'Prints python version'),
             helptext('owner', '!merge <nick> <alt>', 'Merges two nicks together')
             }
+
+def mangle(nick):
+    return u"{0}{1}{2}".format(nick[:1], unichr(int('200B', 16)), nick[1:])
 
 @sopel.module.event('KICK')
 @sopel.module.rule(r'.*')
@@ -261,7 +264,7 @@ def pyver(bot, trigger):
 @sopel.module.commands('admin')
 def admin(bot, trigger):
     if trigger.group(3) == 'list':
-        bot.say('Admins: {}'.format(', '.join(bot.config.core.admins)))
+        bot.say(u'Admins: {}'.format(u', '.join(mangle(n) for n in bot.config.core.admins)))
         return
 
     if not trigger.is_privmsg and not trigger.owner:

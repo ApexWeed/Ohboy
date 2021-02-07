@@ -3,6 +3,8 @@ from dateutil import tz
 import sopel.modules
 import random
 
+mario = False
+
 def setup(bot):
     random.seed();
 
@@ -85,7 +87,20 @@ def gender(bot, trigger):
 
 @sopel.module.commands('bong')
 def bong(bot, trigger):
-    bot.say("OY IT'S {0} BONG".format(datetime.now(tz=tz.gettz('Europe/London')).hour % 12))
+    hour = datetime.now(tz=tz.gettz('Europe/London')).hour % 12
+    if hour == 0:
+        hour = 12
+    bot.say("BONG " * hour)
+
+@sopel.module.commands('bing')
+def bing(bot, trigger):
+    global mario
+    if not mario:
+        mario = True
+        return
+
+    mario = False
+    bot.say('WAHOO')
 
 @sopel.module.rule(r'hi ohboy')
 def hi(bot, trigger):
